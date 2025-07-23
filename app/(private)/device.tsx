@@ -22,7 +22,34 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { auth } from '../../constants/firebaseConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import { useErrorContext } from '../../contexts/ErrorContext';
+import { useNotifications } from '../../contexts/NotificationsContext';
 import { getUserData } from '../../core/requestsHelper';
+
+// Language imports
+import en from '../../lang/en';
+import es from '../../lang/es';
+import fi from '../../lang/fi';
+import fr from '../../lang/fr';
+import it from '../../lang/it';
+import sv from '../../lang/sv';
+
+// Types
+import { Languages, TranslationKeys, translate } from '../../types/translations';
+
+// Configuración de traducciones
+const translations: Languages = {
+  en,
+  it,
+  es,
+  fr,
+  sv,
+  fi,
+};
+
+// Función de traducción
+const t = (key: TranslationKeys, locale: string): string => {
+  return translate(key, locale as keyof Languages, translations);
+};
 
 // Placeholder para imágenes de dispositivos - reemplaza con tus assets reales
 const getDeviceIcon = (deviceType: string) => {
@@ -41,6 +68,7 @@ const getDeviceIcon = (deviceType: string) => {
 const getDeviceType = (device: any): string => {
   return device.type?.types_name || 'generic';
 };
+
 const colors = {
   primaryButton: '#007AFF',
   primaryText: '#333333',
@@ -49,67 +77,47 @@ const colors = {
   valueDarkText: '#333333',
   cardBackground: '#ffffff',
   background: '#f5f5f5',
-};
-
-// Traducciones básicas - reemplaza con tu sistema de traducciones
-const translations = {
-  en: {
-    no_devices_title: 'No devices associated',
-    no_devices_subtitle: 'Tap the + button to add your first device',
-    battery_status: 'Battery',
-    last_transmission: 'Last transmission',
-    temperature: 'Temperature',
-    humidity: 'Humidity',
-    state: 'State',
-    visit_website: 'Visit Website',
-    logout: 'Logout',
-    confirm_logout: 'Are you sure you want to logout?',
-    cancel: 'Cancel',
-    error_loading: 'Error loading devices',
-  },
-  es: {
-    no_devices_title: 'No hay dispositivos asociados',
-    no_devices_subtitle: 'Toca el botón + para agregar tu primer dispositivo',
-    battery_status: 'Batería',
-    last_transmission: 'Última transmisión',
-    temperature: 'Temperatura',
-    humidity: 'Humedad',
-    state: 'Estado',
-    visit_website: 'Visitar sitio web',
-    logout: 'Cerrar sesión',
-    confirm_logout: '¿Estás seguro de que quieres cerrar sesión?',
-    cancel: 'Cancelar',
-    error_loading: 'Error cargando dispositivos',
-  },
+  success: '#4CAF50',
+  error: '#FF3B30', 
+  warning: '#FF9500',
+  info: '#007AFF',
+  alertBackground: 'rgba(255, 59, 48, 0.05)',
+  warningBackground: 'rgba(255, 149, 0, 0.1)',
 };
 
 const DeviceScreen: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
   const { showError } = useErrorContext();
+  const { setRefreshCallback, refreshDevices } = useNotifications();
 
   // Estados
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [lang, setLang] = useState<'en' | 'es'>('en');
-
-  // Función para traducir
-  const t = (key: keyof typeof translations.en): string => {
-    return translations[lang][key] || translations.en[key];
-  };
+  const [lang, setLang] = useState<keyof Languages>('en');
 
   // Configurar idioma
   const setupLanguage = async () => {
     try {
       const storedLang = await AsyncStorage.getItem('lang');
       if (storedLang) {
-        setLang(storedLang.substring(0, 2) as 'en' | 'es');
+        const langCode = storedLang.substring(0, 2) as keyof Languages;
+        // Verificar que el idioma sea soportado
+        if (translations[langCode]) {
+          setLang(langCode);
+        } else {
+          setLang('en');
+        }
       } else {
         const locale = Localization.getLocales()[0];
-        const langCode = locale.languageCode === 'es' ? 'es' : 'en';
-        setLang(langCode);
-        await AsyncStorage.setItem('lang', langCode);
+        const langCode = locale.languageCode?.substring(0, 2) as keyof Languages;
+        if (translations[langCode]) {
+          setLang(langCode);
+        } else {
+          setLang('en');
+        }
+        await AsyncStorage.setItem('lang', langCode || 'en');
       }
     } catch (error) {
       console.error('Language setup error:', error);
@@ -123,18 +131,18 @@ const DeviceScreen: React.FC = () => {
 
     try {
       console.log('🔄 Cargando dispositivos...');
-      const result = await getUserData(user.uid, 'devices');
+      const result = await getUserData(user.uid, 'last');
 
       if (result.success && result.data) {
         setDevices(result.data.devices || []);
         console.log('✅ Dispositivos cargados:', result.data.devices?.length || 0);
       } else {
         console.error('❌ Error cargando dispositivos:', result.error);
-        showError(result.error || t('error_loading'));
+        showError(result.error || 'Error loading devices');
       }
     } catch (error: any) {
       console.error('❌ Error cargando dispositivos:', error);
-      showError(error.message || t('error_loading'));
+      showError(error.message || 'Error loading devices');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -151,9 +159,9 @@ const DeviceScreen: React.FC = () => {
   const handleLogout = async () => {
     Alert.alert(
       '',
-      t('confirm_logout'),
+      t('confirm_logout', lang),
       [
-        { text: t('cancel'), style: 'cancel' },
+        { text: t('cancel', lang), style: 'cancel' },
         {
           text: 'OK',
           onPress: async () => {
@@ -181,7 +189,68 @@ const DeviceScreen: React.FC = () => {
     return device.battery?.[0]?.charge_status || '-';
   };
 
-  // Obtener estado del dispositivo
+  // Obtener estado de conexión mejorado con la nueva estructura de datos
+  const getConnectionState = (device: any) => {
+    console.log('Device status check:', device);
+    
+    // Prioridad 1: Verificar si el dispositivo tiene mode_id = 1 (ON)
+    const modeId = device.mode?.mode_id || device.mode_id;
+    
+    // Si el modo está OFF, automáticamente es desconectado
+    if (modeId !== 1) {
+      return { status: 'ko', label: 'Desconectado' };
+    }
+    
+    // Prioridad 2: Verificar el estado más reciente del dispositivo
+    // Usar last_watch_family_data para dispositivos tipo watch/leak/volt
+    const lastWatchFamilyData = device.last_watch_family_data?.[0];
+    if (lastWatchFamilyData) {
+      const state = lastWatchFamilyData.state;
+      
+      // Verificar si hay alarma activa
+      if (state?.is_alarm === true) {
+        return { status: 'alarm', label: 'Alarma Activa' };
+      }
+      
+      // Estados que indican dispositivo activo/conectado
+      const activeStates = ['OK', 'ARMED', 'MONITORING'];
+      if (activeStates.includes(state?.state_name)) {
+        return { status: 'ok', label: 'Conectado' };
+      }
+      
+      // Estados que indican dispositivo inactivo
+      const inactiveStates = ['DISARMED', 'OFF', 'DISCONNECTED'];
+      if (inactiveStates.includes(state?.state_name)) {
+        return { status: 'ko', label: 'Desconectado' };
+      }
+    }
+    
+    // Prioridad 3: Para dispositivos termo, verificar last_termo_data
+    if (device.type?.types_name === 'termo') {
+      const lastTermoData = device.last_termo_data?.[0];
+      if (lastTermoData && lastTermoData.temperature != null) {
+        return { status: 'ok', label: 'Conectado' };
+      }
+    }
+    
+    // Prioridad 4: Verificar última transmisión (timestamp reciente)
+    const updatedOn = device.updated_on;
+    if (updatedOn) {
+      const lastUpdate = new Date(updatedOn);
+      const now = new Date();
+      const hoursDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+      
+      // Si la última actualización fue hace menos de 24 horas
+      if (hoursDiff < 24) {
+        return { status: 'ok', label: 'Conectado' };
+      }
+    }
+    
+    // Por defecto, si el modo está ON pero no hay datos recientes
+    return { status: 'warning', label: 'Sin datos recientes' };
+  };
+
+  // Obtener estado del dispositivo mejorado
   const getDeviceState = (device: any) => {
     const type = device.type?.types_name;
     
@@ -190,30 +259,77 @@ const DeviceScreen: React.FC = () => {
       const temperature = device.last_termo_data?.[0]?.temperature;
       return temperature ? `${temperature}°C` : '-';
     } else {
-      // Para otros dispositivos (watch, etc.), mostrar estado de alarma
-      const lastData = device.last_watch_data?.[0];
-      if (!lastData || lastData.alarm == null) {
-        return '-';
+      // Para otros dispositivos, usar last_watch_family_data
+      const lastWatchFamilyData = device.last_watch_family_data?.[0];
+      
+      if (lastWatchFamilyData && lastWatchFamilyData.state) {
+        const state = lastWatchFamilyData.state;
+        
+        // Si hay alarma, mostrar estado de alarma
+        if (state.is_alarm === true) {
+          return 'ALARMA';
+        }
+        
+        // Mostrar el estado localizado según el idioma
+        // Por ahora usar español, pero puedes cambiarlo según el idioma seleccionado
+        switch (state.state_name) {
+          case 'OK':
+            return 'OK';
+          case 'DISARMED':
+            return 'Desarmado';
+          case 'ARMED':
+            return 'Armado';
+          case 'MONITORING':
+            return 'Monitoreando';
+          default:
+            return state.state_name || 'Desconocido';
+        }
       }
       
-      // Estado basado en alarma
-      if (lastData.alarm === 1) {
-        return 'Alarma';
-      } else {
-        return 'Normal';
+      // Fallback al método anterior si no hay datos nuevos
+      const lastData = device.last_watch_data?.[0];
+      if (lastData && lastData.alarm != null) {
+        return lastData.alarm === 1 ? 'Alarma' : 'Normal';
       }
+      
+      return '-';
     }
   };
 
-  // Obtener estado de conexión (ok/ko) basado en mode_id
-  const getConnectionState = (device: any) => {
-    const modeId = device.mode?.mode_id || device.mode_id;
-    
-    if (modeId === 1) {
-      return { status: 'ok', label: 'Conectado' };
-    } else {
-      return { status: 'ko', label: 'Desconectado' };
+  // Función auxiliar para obtener el color del badge según el estado
+  const getStatusBadgeColor = (connectionState: any) => {
+    switch (connectionState.status) {
+      case 'ok':
+        return colors.success; // Verde
+      case 'alarm':
+        return colors.error; // Rojo alarma
+      case 'warning':
+        return colors.warning; // Naranja
+      case 'ko':
+      default:
+        return colors.error; // Rojo desconectado
     }
+  };
+
+  // Función auxiliar para obtener el texto del badge
+  const getStatusBadgeText = (connectionState: any) => {
+    switch (connectionState.status) {
+      case 'ok':
+        return '● CONECTADO';
+      case 'alarm':
+        return '● ALARMA';
+      case 'warning':
+        return '● ADVERTENCIA';
+      case 'ko':
+      default:
+        return '● DESCONECTADO';
+    }
+  };
+
+  // Función para verificar si un dispositivo necesita atención
+  const needsAttention = (device: any) => {
+    const connectionState = getConnectionState(device);
+    return connectionState.status === 'alarm' || connectionState.status === 'ko';
   };
 
   // Obtener última transmisión desde updated_on
@@ -252,7 +368,7 @@ const DeviceScreen: React.FC = () => {
     return null;
   };
 
-  // Renderizar tarjeta de dispositivo
+  // Renderizar tarjeta de dispositivo actualizada
   const renderDeviceCard = (device: any, index: number) => {
     const deviceName = device.settings?.[0]?.l_device_name || 'Dispositivo';
     const serialNumber = device.serial_number;
@@ -260,13 +376,23 @@ const DeviceScreen: React.FC = () => {
     const deviceType = getDeviceType(device);
     const humidity = getHumidity(device);
     const temperature = getTemperature(device);
+    const deviceState = getDeviceState(device);
+    const badgeColor = getStatusBadgeColor(connectionState);
+    const badgeText = getStatusBadgeText(connectionState);
 
     return (
       <TouchableOpacity
         key={`${device.sigfox_id || device.serial_number}-${index}`}
         style={[
           styles.deviceCard,
-          { borderLeftWidth: 4, borderLeftColor: connectionState.status === 'ok' ? '#4CAF50' : '#FF3B30' }
+          { 
+            borderLeftWidth: 4, 
+            borderLeftColor: badgeColor,
+            // Añadir un ligero fondo de alerta si necesita atención
+            backgroundColor: needsAttention(device) 
+              ? colors.alertBackground
+              : colors.cardBackground
+          }
         ]}
         onPress={() => navigateToDevice(device)}
         activeOpacity={0.8}
@@ -274,10 +400,10 @@ const DeviceScreen: React.FC = () => {
         {/* Badge de estado prominente */}
         <View style={[
           styles.statusBadge,
-          { backgroundColor: connectionState.status === 'ok' ? '#4CAF50' : '#FF3B30' }
+          { backgroundColor: badgeColor }
         ]}>
           <Text style={styles.statusBadgeText}>
-            {connectionState.status === 'ok' ? '● CONECTADO' : '● DESCONECTADO'}
+            {badgeText}
           </Text>
         </View>
 
@@ -286,7 +412,7 @@ const DeviceScreen: React.FC = () => {
             <Image
               style={styles.deviceIconImage}
               source={getDeviceIcon(deviceType)}
-              defaultSource={require('../../assets/logoactionbar.png')} // Fallback
+              defaultSource={require('../../assets/logoactionbar.png')}
             />
           </View>
           <View style={styles.deviceInfo}>
@@ -299,14 +425,31 @@ const DeviceScreen: React.FC = () => {
         </View>
 
         <View style={styles.deviceDetails}>
+          {/* Estado del dispositivo */}
+          {/* <View style={styles.detailRow}>
+            <Text style={styles.deviceProperty}>
+              Estado: <Text style={[
+                styles.deviceValue,
+                {
+                  color: connectionState.status === 'alarm' ? colors.error :
+                         connectionState.status === 'ok' ? colors.success :
+                         connectionState.status === 'warning' ? colors.warning : colors.secondaryText
+                }
+              ]}>{deviceState}</Text>
+            </Text>
+          </View> */}
+
+          {/* Batería */}
           <View style={styles.detailRow}>
             <Text style={styles.deviceProperty}>
-              {t('battery_status')}: <Text style={styles.deviceValue}>{getBatteryStatus(device)}</Text>
+              {t('battery_status', lang)}: <Text style={styles.deviceValue}>{getBatteryStatus(device)}%</Text>
             </Text>
           </View>
+
+          {/* Última transmisión */}
           <View style={styles.detailRow}>
             <Text style={styles.deviceProperty}>
-              {t('last_transmission')}: <Text style={styles.deviceValue}>{getLastTransmission(device)}</Text>
+              {t('last_trasmission', lang)}: <Text style={styles.deviceValue}>{getLastTransmission(device)}</Text>
             </Text>
           </View>
           
@@ -314,14 +457,24 @@ const DeviceScreen: React.FC = () => {
           {temperature && (
             <View style={styles.detailRow}>
               <Text style={styles.deviceProperty}>
-                {t('temperature')}: <Text style={[styles.deviceValue, styles.temperatureValue]}>{temperature}</Text>
+                {t('temperature', lang)}: <Text style={[styles.deviceValue, styles.temperatureValue]}>{temperature}</Text>
               </Text>
             </View>
           )}
           {humidity && (
             <View style={styles.detailRow}>
               <Text style={styles.deviceProperty}>
-                {t('humidity')}: <Text style={styles.deviceValue}>{humidity}</Text>
+                {t('humidity', lang)}: <Text style={styles.deviceValue}>{humidity}</Text>
+              </Text>
+            </View>
+          )}
+
+          {/* Información adicional del estado si es relevante */}
+          {connectionState.status === 'warning' && (
+            <View style={styles.warningRow}>
+              <MaterialIcons name="warning" size={16} color={colors.warning} />
+              <Text style={[styles.deviceProperty, { color: colors.warning, marginLeft: 4 }]}>
+                Sin datos recientes
               </Text>
             </View>
           )}
@@ -334,8 +487,8 @@ const DeviceScreen: React.FC = () => {
   const renderNoDevices = () => (
     <View style={styles.emptyContainer}>
       <MaterialIcons name="devices" size={64} color={colors.secondaryText} />
-      <Text style={styles.emptyTitle}>{t('no_devices_title')}</Text>
-      <Text style={styles.emptySubtitle}>{t('no_devices_subtitle')}</Text>
+      <Text style={styles.emptyTitle}>No hay dispositivos asociados</Text>
+      <Text style={styles.emptySubtitle}>Toca el botón + para agregar tu primer dispositivo</Text>
     </View>
   );
 
@@ -347,8 +500,14 @@ const DeviceScreen: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadDevices();
+      
+      // Registrar callback para auto-refresh desde notificaciones
+      setRefreshCallback(() => {
+        console.log('🔄 Auto-refresh triggered by notification/polling');
+        loadDevices();
+      });
     }
-  }, [user]);
+  }, [user, setRefreshCallback]);
 
   return (
     <View style={styles.container}>
@@ -356,10 +515,12 @@ const DeviceScreen: React.FC = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mis Dispositivos</Text>
-        <Pressable onPress={handleLogout} style={styles.logoutButton}>
-          <MaterialIcons name="logout" size={24} color={colors.primaryButton} />
-        </Pressable>
+        <Text style={styles.headerTitle}>{t('my_devices', lang)}</Text>
+        <View style={styles.headerActions}>
+          <Pressable onPress={handleLogout} style={styles.logoutButton}>
+            <MaterialIcons name="logout" size={24} color={colors.primaryButton} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Content */}
@@ -407,6 +568,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.primaryText,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  testButton: {
+    backgroundColor: '#FF6B35',
+    padding: 8,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   logoutButton: {
     padding: 8,
@@ -500,6 +672,14 @@ const styles = StyleSheet.create({
     color: '#FF6B35',
     fontWeight: '600',
     fontSize: 15,
+  },
+  warningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warningBackground,
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 4,
   },
   emptyContainer: {
     flex: 1,

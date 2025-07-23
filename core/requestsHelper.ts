@@ -116,6 +116,7 @@ export const getUserData = async (
     if (scope) {
       url += `?scope=${scope}`;
     }
+    console.log('scopeeeee', scope);    
 
     const response = await fetch(url, {
       method: 'GET',
@@ -137,7 +138,8 @@ export const getUserData = async (
     }
 
     console.log('✅ User data obtained:', responseData);
-
+    console.log('battery', responseData.uid);
+    
     return {
       success: true,
       data: responseData,

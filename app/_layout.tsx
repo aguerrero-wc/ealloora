@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ErrorProvider } from '../contexts/ErrorContext';
+import { NotificationsProvider } from '../contexts/NotificationsContext';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,13 +24,31 @@ function RootLayoutNav() {
       inPrivateGroup,
     });
 
+    // 🎯 CASO 1: Primera carga de la app (segments vacío)
+    if (segments.length === 0) {
+      if (isAuthenticated) {
+        console.log('✅ First load: authenticated user → private area');
+        router.replace('/(private)/device');
+      } else {
+        console.log('🔒 First load: unauthenticated user → login');
+        router.replace('/(auth)/login');
+      }
+      return;
+    }
+
+    // 🎯 CASO 2: Usuario autenticado en rutas de auth
     if (isAuthenticated && inAuthGroup) {
-      // Usuario autenticado en rutas de auth -> redirigir a privadas
       console.log('✅ Redirecting authenticated user to private area');
       router.replace('/(private)/device');
-    } else if (!isAuthenticated && inPrivateGroup) {
-      // Usuario no autenticado en rutas privadas -> redirigir a login
+    } 
+    // 🎯 CASO 3: Usuario no autenticado en rutas privadas  
+    else if (!isAuthenticated && inPrivateGroup) {
       console.log('🔒 Redirecting unauthenticated user to login');
+      router.replace('/(auth)/login');
+    }
+    // 🎯 CASO 4: Usuario no autenticado fuera de grupos auth
+    else if (!isAuthenticated && !inAuthGroup && !inPrivateGroup) {
+      console.log('🔒 User outside auth group → redirecting to login');
       router.replace('/(auth)/login');
     }
   }, [isAuthenticated, segments, isLoading]);
@@ -56,7 +75,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ErrorProvider>
-        <RootLayoutNav />
+        <NotificationsProvider>
+          <RootLayoutNav />
+        </NotificationsProvider>
       </ErrorProvider>
     </AuthProvider>
   );
