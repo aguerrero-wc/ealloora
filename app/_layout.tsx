@@ -1,29 +1,63 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+// app/_layout.tsx
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { ErrorProvider } from '../contexts/ErrorContext';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+function RootLayoutNav() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  useEffect(() => {
+    if (isLoading) return; // Esperar a que termine de cargar
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
+    const inAuthGroup = segments[0] === '(auth)';
+    const inPrivateGroup = segments[0] === '(private)';
+
+    console.log('🔄 Navigation check:', {
+      isAuthenticated,
+      segments,
+      inAuthGroup,
+      inPrivateGroup,
+    });
+
+    if (isAuthenticated && inAuthGroup) {
+      // Usuario autenticado en rutas de auth -> redirigir a privadas
+      console.log('✅ Redirecting authenticated user to private area');
+      router.replace('/(private)/device');
+    } else if (!isAuthenticated && inPrivateGroup) {
+      // Usuario no autenticado en rutas privadas -> redirigir a login
+      console.log('🔒 Redirecting unauthenticated user to login');
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, segments, isLoading]);
+
+  if (isLoading) {
+    return (
+      <LoadingSpinner 
+        visible={true} 
+        text="Cargando..." 
+        color="#007AFF"
+      />
+    );
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(private)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <ErrorProvider>
+        <RootLayoutNav />
+      </ErrorProvider>
+    </AuthProvider>
   );
 }
