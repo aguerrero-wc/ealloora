@@ -45,7 +45,8 @@
     "expo-device": "~7.1.4",
     "expo-camera": "~16.1.11",
     "expo-linear-gradient": "~14.1.5",
-    "@react-native-community/datetimepicker": "8.4.1"
+    "@react-native-community/datetimepicker": "8.4.1",
+    "expo-dev-client": "~5.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
