@@ -5,6 +5,7 @@ import Constants from 'expo-constants';
 import * as Localization from 'expo-localization';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -80,6 +81,10 @@ const LoginScreen: React.FC = () => {
   const [popupDialogIsVisible, setPopupDialogIsVisible] = useState(false);
   const [popupDialogConfirmIsVisible, setPopupDialogConfirmIsVisible] = useState(false);
 
+  // Estados de focus para animaciones
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+
   // Usar contexto global para errores
   const { handleFirebaseAuthError } = useErrorContext();
 
@@ -87,6 +92,10 @@ const LoginScreen: React.FC = () => {
   const passwordRef = useRef<TextInput>(null);
   const popupDialogRef = useRef<GenericPopupDialogRef>(null);
   const popupDialogConfirmRef = useRef<GenericPopupDialogRef>(null);
+
+  // Animaciones
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   console.log('🔑 LoginScreen: Renderizando...');
 
@@ -149,6 +158,20 @@ const LoginScreen: React.FC = () => {
   useEffect(() => {
     console.log('🔄 LoginScreen: useEffect ejecutado');
     setupLanguage();
+    
+    // Animación de entrada
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   // Funciones de manejo
@@ -265,149 +288,265 @@ const LoginScreen: React.FC = () => {
         style={styles.container}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <ImageBackground
-            style={styles.logoImage}
-            source={require('../../assets/logoactionbar.png')}
-          />
-        </View>
-
-        {/* Email Input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>{t('email', lang)}</Text>
-          <TextInput
-            style={[styles.textInput, errorEmail ? styles.textInputError : null]}
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (errorEmail) setErrorEmail('');
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder={t('email', lang)}
-            placeholderTextColor={colors.primaryLightInputText}
-            onSubmitEditing={focusPassword}
-            returnKeyType="next"
-          />
-          {errorEmail ? <Text style={styles.errorText}>{errorEmail}</Text> : null}
-        </View>
-
-        {/* Password Input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>{t('password', lang)}</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              ref={passwordRef}
-              style={[styles.textInput, styles.passwordInput, errorPassword ? styles.textInputError : null]}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errorPassword) setErrorPassword('');
-              }}
-              autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry={secureTextEntry}
-              placeholder={t('password', lang)}
-              placeholderTextColor={colors.primaryLightInputText}
-              returnKeyType="done"
-              onSubmitEditing={handleLogin}
-            />
-            <Pressable onPress={toggleSecureTextEntry} style={styles.eyeIcon}>
-              <MaterialIcons
-                name={secureTextEntry ? 'visibility' : 'visibility-off'}
-                size={24}
-                color={colors.primaryLightInputTextAccent}
-              />
-            </Pressable>
-          </View>
-          {errorPassword ? <Text style={styles.errorText}>{errorPassword}</Text> : null}
-        </View>
-
-        {/* Forgot Password */}
-        <Pressable onPress={() => {
-          setErrorRecover('');
-          popupDialogRef.current?.show();
-        }}>
-          <Text style={styles.forgotPasswordText}>
-            {t('forgot_pass', lang)}
-          </Text>
-        </Pressable>
-
-        {/* Login Button */}
-        <Pressable 
-          style={[styles.loginButton, loading && styles.loginButtonDisabled]} 
-          onPress={handleLogin}
-          disabled={loading}
+        <Animated.View 
+          style={[
+            styles.contentWrapper,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
         >
-          <Text style={styles.loginButtonText}>
-            {t('login', lang).toUpperCase()}
-          </Text>
-        </Pressable>
+          {/* Header Section */}
+          <View style={styles.headerSection}>
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoWrapper}>
+                <ImageBackground
+                  style={styles.logoImage}
+                  source={require('../../assets/logoactionbar.png')}
+                />
+              </View>
+            </View>
 
-        {/* Separator */}
-        <View style={styles.separatorContainer}>
-          <View style={styles.separator} />
-          <Text style={styles.orText}>{t('or', lang)}</Text>
-          <View style={styles.separator} />
-        </View>
+            {/* Welcome Text */}
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeTitle}>
+                Bienvenido de vuelta
+              </Text>
+              <Text style={styles.welcomeSubtitle}>
+                Inicia sesión en tu cuenta
+              </Text>
+            </View>
+          </View>
 
-        {/* Registration Link */}
-        <View style={styles.registrationContainer}>
-          <Pressable onPress={() => router.push('/(auth)/registration')}>
-            <Text style={styles.registrationText}>
-              {t('registration', lang).toUpperCase()}
-            </Text>
-          </Pressable>
-        </View>
+          {/* Form Section */}
+          <View style={styles.formSection}>
+            {/* Email Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>{t('email', lang)}</Text>
+              <View style={[
+                styles.inputWrapper,
+                emailFocused && styles.inputWrapperFocused,
+                errorEmail && styles.inputWrapperError
+              ]}>
+                <MaterialIcons 
+                  name="email" 
+                  size={20} 
+                  color={emailFocused ? colors.primaryButton : colors.primaryLightInputText} 
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.textInput}
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (errorEmail) setErrorEmail('');
+                  }}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholder={t('email', lang)}
+                  placeholderTextColor={colors.primaryLightInputText}
+                  onSubmitEditing={focusPassword}
+                  returnKeyType="next"
+                />
+              </View>
+              {errorEmail ? (
+                <View style={styles.errorContainer}>
+                  <MaterialIcons name="error-outline" size={16} color={colors.primaryDarkText} />
+                  <Text style={styles.errorText}>{errorEmail}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>{t('password', lang)}</Text>
+              <View style={[
+                styles.inputWrapper,
+                passwordFocused && styles.inputWrapperFocused,
+                errorPassword && styles.inputWrapperError
+              ]}>
+                <MaterialIcons 
+                  name="lock-outline" 
+                  size={20} 
+                  color={passwordFocused ? colors.primaryButton : colors.primaryLightInputText} 
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  ref={passwordRef}
+                  style={[styles.textInput, styles.passwordInput]}
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (errorPassword) setErrorPassword('');
+                  }}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  secureTextEntry={secureTextEntry}
+                  placeholder={t('password', lang)}
+                  placeholderTextColor={colors.primaryLightInputText}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
+                />
+                <Pressable onPress={toggleSecureTextEntry} style={styles.eyeIcon}>
+                  <MaterialIcons
+                    name={secureTextEntry ? 'visibility' : 'visibility-off'}
+                    size={22}
+                    color={colors.primaryLightInputText}
+                  />
+                </Pressable>
+              </View>
+              {errorPassword ? (
+                <View style={styles.errorContainer}>
+                  <MaterialIcons name="error-outline" size={16} color={colors.primaryDarkText} />
+                  <Text style={styles.errorText}>{errorPassword}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Forgot Password */}
+            <View style={styles.forgotPasswordContainer}>
+              <Pressable 
+                onPress={() => {
+                  setErrorRecover('');
+                  popupDialogRef.current?.show();
+                }}
+                style={styles.forgotPasswordButton}
+              >
+                <Text style={styles.forgotPasswordText}>
+                  {t('forgot_pass', lang)}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Login Button */}
+            <Pressable 
+              style={[
+                styles.loginButton, 
+                loading && styles.loginButtonDisabled
+              ]} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <View style={styles.loginButtonContent}>
+                <Text style={styles.loginButtonText}>
+                  {t('login', lang)}
+                </Text>
+                <MaterialIcons 
+                  name="arrow-forward" 
+                  size={20} 
+                  color="#fff" 
+                  style={styles.loginButtonIcon}
+                />
+              </View>
+            </Pressable>
+
+            {/* Separator */}
+            <View style={styles.separatorContainer}>
+              <View style={styles.separator} />
+              <View style={styles.orContainer}>
+                <Text style={styles.orText}>{t('or', lang)}</Text>
+              </View>
+              <View style={styles.separator} />
+            </View>
+
+            {/* Registration Link */}
+            <View style={styles.registrationContainer}>
+              <Text style={styles.registrationQuestion}>
+                ¿No tienes una cuenta?
+              </Text>
+              <Pressable 
+                onPress={() => router.push('/(auth)/registration')}
+                style={styles.registrationButton}
+              >
+                <Text style={styles.registrationText}>
+                  {t('registration', lang)}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Animated.View>
       </KeyboardAwareScrollView>
 
       {/* Recovery Password Modal */}
       <GenericPopupDialog 
         ref={popupDialogRef}
-        width={0.85}
-        dialogStyle={{ height: 272 }}
+        width={0.9}
+        dialogStyle={styles.modalDialog}
         showMethod={(isVisible) => setPopupDialogIsVisible(isVisible)}
       >
         <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" enabled>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {t('email_address', lang)}
-            </Text>
-            <Text style={styles.modalSubtitle}>
-              {t('insert_email', lang)}
-            </Text>
-            <Text style={styles.modalSubtitle}>
-              {t('recover_pass', lang)}
-            </Text>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIconContainer}>
+                <MaterialIcons name="email" size={32} color={colors.primaryButton} />
+              </View>
+              <Text style={styles.modalTitle}>
+                {t('email_address', lang)}
+              </Text>
+              <Text style={styles.modalSubtitle}>
+                {t('insert_email', lang)} {t('recover_pass', lang)}
+              </Text>
+            </View>
             
-            <TextInput
-              style={[styles.textInput, errorRecover ? styles.textInputError : null]}
-              value={recoverEmail}
-              onChangeText={(text) => {
-                setRecoverEmail(text);
-                if (errorRecover) setErrorRecover('');
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholder="Email"
-              placeholderTextColor={colors.primaryLightInputText}
-              returnKeyType="done"
-            />
-            {errorRecover ? <Text style={styles.errorText}>{errorRecover}</Text> : null}
+            <View style={styles.modalInputContainer}>
+              <View style={[
+                styles.inputWrapper,
+                styles.modalInputWrapper,
+                errorRecover && styles.inputWrapperError
+              ]}>
+                <MaterialIcons 
+                  name="email" 
+                  size={20} 
+                  color={colors.primaryLightInputText} 
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.textInput}
+                  value={recoverEmail}
+                  onChangeText={(text) => {
+                    setRecoverEmail(text);
+                    if (errorRecover) setErrorRecover('');
+                  }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholder="tu@email.com"
+                  placeholderTextColor={colors.primaryLightInputText}
+                  returnKeyType="done"
+                />
+              </View>
+              {errorRecover ? (
+                <View style={styles.errorContainer}>
+                  <MaterialIcons name="error-outline" size={16} color={colors.primaryDarkText} />
+                  <Text style={styles.errorText}>{errorRecover}</Text>
+                </View>
+              ) : null}
+            </View>
             
             <View style={styles.modalActions}>
-              <Pressable onPress={() => popupDialogRef.current?.dismiss()}>
-                <Text style={styles.modalActionText}>
-                  {t('cancel', lang).toUpperCase()}
+              <Pressable 
+                onPress={() => popupDialogRef.current?.dismiss()}
+                style={styles.modalCancelButton}
+              >
+                <Text style={styles.modalCancelText}>
+                  {t('cancel', lang)}
                 </Text>
               </Pressable>
-              <Pressable onPress={handleResetPassword}>
-                <Text style={styles.modalActionText}>
-                  {t('send', lang).toUpperCase()}
+              <Pressable 
+                onPress={handleResetPassword}
+                style={styles.modalSendButton}
+              >
+                <Text style={styles.modalSendText}>
+                  {t('send', lang)}
                 </Text>
               </Pressable>
             </View>
@@ -418,22 +557,30 @@ const LoginScreen: React.FC = () => {
       {/* Confirmation Modal */}
       <GenericPopupDialog 
         ref={popupDialogConfirmRef}
-        width={0.85}
-        dialogStyle={{ height: 212 }}
+        width={0.9}
+        dialogStyle={styles.confirmModalDialog}
         showMethod={(isVisible) => setPopupDialogConfirmIsVisible(isVisible)}
       >
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>
-            {t('email_address', lang)}
-          </Text>
-          <Text style={styles.modalSubtitle}>
-            {t('check_your_email', lang)}
-          </Text>
+          <View style={styles.modalHeader}>
+            <View style={[styles.modalIconContainer, styles.successIconContainer]}>
+              <MaterialIcons name="check-circle" size={32} color="#4CAF50" />
+            </View>
+            <Text style={styles.modalTitle}>
+              ¡Correo enviado!
+            </Text>
+            <Text style={styles.modalSubtitle}>
+              {t('check_your_email', lang)}
+            </Text>
+          </View>
           
           <View style={styles.modalActions}>
-            <Pressable onPress={() => popupDialogConfirmRef.current?.dismiss()}>
-              <Text style={styles.modalActionText}>
-                {t('ok', lang).toUpperCase()}
+            <Pressable 
+              onPress={() => popupDialogConfirmRef.current?.dismiss()}
+              style={styles.modalOkButton}
+            >
+              <Text style={styles.modalOkText}>
+                {t('ok', lang)}
               </Text>
             </Pressable>
           </View>
@@ -445,134 +592,317 @@ const LoginScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 24,
-    marginTop: Platform.OS === 'ios' ? 20 : Constants.statusBarHeight,
   },
   backgroundImage: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  logoContainer: {
-    justifyContent: 'center',
+  contentWrapper: {
+    flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 60 : Constants.statusBarHeight + 40,
+    paddingBottom: 40,
+  },
+  
+  // Header Section
+  headerSection: {
     alignItems: 'center',
+    marginBottom: 40,
+  },
+  logoContainer: {
+    marginBottom: 32,
+  },
+  logoWrapper: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   logoImage: {
-    width: 256,
-    height: 56,
-    marginTop: 24,
+    width: 200,
+    height: 44,
+  },
+  welcomeContainer: {
+    alignItems: 'center',
+  },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
+  // Form Section
+  formSection: {
+    flex: 1,
   },
   inputContainer: {
-    marginTop: 24,
+    marginBottom: 24,
   },
   inputLabel: {
-    fontSize: 16,
-    color: colors.primaryLightInputText,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
     marginBottom: 8,
-    paddingLeft: 12,
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  inputWrapperFocused: {
+    borderColor: colors.primaryButton,
+    backgroundColor: '#ffffff',
+    shadowOpacity: 0.15,
+    elevation: 6,
+  },
+  inputWrapperError: {
+    borderColor: colors.primaryDarkText,
+    backgroundColor: '#fef2f2',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   textInput: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: colors.primaryLightInputText,
-    borderRadius: 4,
-    paddingHorizontal: 12,
+    flex: 1,
     fontSize: 16,
-    color: colors.primaryLightInputEdit,
-    backgroundColor: '#fff',
-  },
-  textInputError: {
-    borderColor: colors.primaryDarkText,
-  },
-  passwordContainer: {
-    position: 'relative',
+    color: '#1f2937',
+    paddingVertical: 0,
   },
   passwordInput: {
-    paddingRight: 50,
+    paddingRight: 12,
   },
   eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    top: 13,
     padding: 8,
+    borderRadius: 8,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginLeft: 4,
   },
   errorText: {
     color: colors.primaryDarkText,
-    fontSize: 12,
-    marginTop: 4,
-    paddingLeft: 12,
+    fontSize: 14,
+    marginLeft: 6,
+    flex: 1,
+  },
+
+  // Forgot Password
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 32,
+  },
+  forgotPasswordButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   forgotPasswordText: {
     fontSize: 14,
-    color: colors.secondaryText,
-    textAlign: 'right',
-    marginTop: 12,
+    color: colors.primaryButton,
+    fontWeight: '600',
   },
+
+  // Login Button
   loginButton: {
     backgroundColor: colors.primaryButton,
-    height: 48,
-    borderRadius: 4,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 28,
+    marginBottom: 32,
+    shadowColor: colors.primaryButton,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   loginButtonDisabled: {
-    backgroundColor: colors.primaryButton + '80',
+    backgroundColor: colors.primaryButton + '60',
+    shadowOpacity: 0.1,
+  },
+  loginButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   loginButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    marginRight: 8,
   },
+  loginButtonIcon: {
+    marginLeft: 4,
+  },
+
+  // Separator
   separatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
+    marginBottom: 32,
   },
   separator: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.black,
-    marginHorizontal: 16,
+    backgroundColor: '#e5e7eb',
+  },
+  orContainer: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
   },
   orText: {
     fontSize: 14,
-    color: colors.black,
-    paddingHorizontal: 16,
+    color: '#9ca3af',
+    fontWeight: '500',
   },
+
+  // Registration
   registrationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
-    paddingBottom: 24,
+    flexWrap: 'wrap',
+  },
+  registrationQuestion: {
+    fontSize: 16,
+    color: '#64748b',
+    marginRight: 4,
+  },
+  registrationButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   registrationText: {
-    fontSize: 14,
-    color: colors.primaryText,
-    padding: 8,
+    fontSize: 16,
+    color: colors.primaryButton,
+    fontWeight: '700',
+  },
+
+  // Modal Styles
+  modalDialog: {
+    borderRadius: 24,
+    paddingVertical: 0,
+  },
+  confirmModalDialog: {
+    borderRadius: 24,
+    paddingVertical: 0,
   },
   modalContent: {
-    padding: 24,
+    padding: 32,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primaryButton + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  successIconContainer: {
+    backgroundColor: '#4CAF50' + '20',
   },
   modalTitle: {
-    fontSize: 20,
-    color: '#000',
-    marginBottom: 20,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 16,
-    color: '#757575',
-    marginBottom: 8,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  modalInputContainer: {
+    marginBottom: 32,
+  },
+  modalInputWrapper: {
+    marginBottom: 0,
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginTop: 24,
-    gap: 24,
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  modalActionText: {
-    fontSize: 14,
-    color: colors.primaryButton,
-    fontWeight: 'bold',
+  modalCancelButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  modalSendButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.primaryButton,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalSendText: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  modalOkButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.primaryButton,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOkText: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '700',
   },
 });
 

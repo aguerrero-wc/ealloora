@@ -177,12 +177,21 @@ const DeviceScreen: React.FC = () => {
     );
   };
 
-  // Navegación a dispositivo específico
-  const navigateToDevice = (device: any) => {
-    console.log('📱 Navegando a dispositivo:', device.serial_number);
-    // Aquí puedes implementar la navegación a la pantalla de detalle del dispositivo
-    Alert.alert('Info', `Dispositivo: ${device.settings?.[0]?.l_device_name || device.serial_number}`);
-  };
+const navigateToDevice = (device: any) => {
+  console.log('📱 Navegando a dispositivooooooo:', device.type);
+  
+  // Navegar a la página de historial del dispositivo
+  router.push({
+    pathname: '/(private)/device-history',
+    params: {
+      deviceID: device.UserDevice?.serial_number || device.serial_number,
+      deviceName: device.settings?.[0]?.l_device_name || device.serial_number,
+      sigfox_id: device.sigfox_id,
+      deviceType: device.type?.types_name || 'generic',
+      deviceSection: 'Single', // Para indicar que es un dispositivo específico
+    },
+  });
+};
 
   // Obtener estado de batería
   const getBatteryStatus = (device: any) => {
@@ -253,6 +262,7 @@ const DeviceScreen: React.FC = () => {
   // Obtener estado del dispositivo mejorado
   const getDeviceState = (device: any) => {
     const type = device.type?.types_name;
+    console.log('typeeeeeeeeeee',type);
     
     if (type === 'termo') {
       // Para termómetros, mostrar temperatura
