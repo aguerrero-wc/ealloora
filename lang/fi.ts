@@ -19,7 +19,7 @@ export default {
 	"privacy_policy2": "tietosuojakäytännön",
 	"privacy_policy3": " (vaaditaan)",
 	"data_collection": "Suostun tietojen käsittelyyn kaupallisiin tarkoituksiin ja tarjouksiin",
-	"link": "https://www.ealloora.com/wp-content/uploads/2019/04/Ealloora_Privacy_Policy_EN.pdf",
+	"link": "https://www.ealloora.com/ealloora-app-legal-advice",
 
 	"my_account": "Tilini",
 	"my_devices": "Laitteeni",

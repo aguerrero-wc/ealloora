@@ -21,7 +21,7 @@ export default {
 	"privacy_policy2": "politique de confidentialité",
 	"privacy_policy3": " (obligatoire)",
 	"data_collection": "Je consens au traitement des données à des fins commerciales et promotions",
-	"link": "https://www.ealloora.com/wp-content/uploads/2019/04/Ealloora_Privacy_Policy_EN.pdf",
+	"link": "https://www.ealloora.com/ealloora-app-legal-advice",
 
 	"my_account": "Mon compte",
 	"my_devices": "Mes appareils",

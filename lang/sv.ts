@@ -21,7 +21,7 @@ export default {
 	"privacy_policy2": "integritetspolicy",
 	"privacy_policy3": " (obligatorisk)",
 	"data_collection": "Jag samtycker till behandlingen av data för kommersiella ändamål och kampanjer",
-	"link": "https://www.ealloora.com/wp-content/uploads/2019/04/Ealloora_Privacy_Policy_EN.pdf",
+	"link": "https://www.ealloora.com/ealloora-app-legal-advice/",
 
 	"my_account": "Mitt konto",
 	"my_devices": "Mina enheter",
