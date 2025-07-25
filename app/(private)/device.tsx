@@ -497,8 +497,8 @@ const navigateToDevice = (device: any) => {
   const renderNoDevices = () => (
     <View style={styles.emptyContainer}>
       <MaterialIcons name="devices" size={64} color={colors.secondaryText} />
-      <Text style={styles.emptyTitle}>No hay dispositivos asociados</Text>
-      <Text style={styles.emptySubtitle}>Toca el botón + para agregar tu primer dispositivo</Text>
+      <Text style={styles.emptyTitle}>There are no associated devices</Text>
+      <Text style={styles.emptySubtitle}>Tap the + button to add your first device</Text>
     </View>
   );
 

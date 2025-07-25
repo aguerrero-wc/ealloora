@@ -1,6 +1,7 @@
 // lang/en.ts
 
 export default {
+  "msg_welcome": "Welcome back",
   "email": "Email",
   "password": "Password",
   "forgot_pass": "Forgot password?",
@@ -23,6 +24,8 @@ export default {
   "privacy_policy3": " (mandatory)",
   "data_collection": "I consent to the processing of the data for commercial and promotional purposes",
   "link": "https://www.ealloora.com/ealloora-app-legal-advice",
+  "dont_have_an_account": "Don't have an account?",
+
 
   "my_account": "My account",
   "my_devices": "My devices",
@@ -44,6 +47,7 @@ export default {
   "associate_help2": "button at the bottom of the page",
 
   "name": "Name",
+  "surname":"Surname",
   "phone": "Phone",
 
   "battery_status": "Battery status",

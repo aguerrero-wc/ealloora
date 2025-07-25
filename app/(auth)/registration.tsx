@@ -212,7 +212,7 @@ const RegistrationScreen: React.FC = () => {
 
     // Validar confirmación de password
     if (formData.password !== formData.passwordConfirm) {
-      const errorMsg = 'Las contraseñas no coinciden';
+      const errorMsg = 'Passwords do not match';
       updateError('password', errorMsg);
       updateError('matchPassword', errorMsg);
       return;
@@ -425,7 +425,7 @@ const RegistrationScreen: React.FC = () => {
           onPress={() => setActiveTab('company')}
         >
           <Text style={[styles.tabText, activeTab === 'company' && styles.activeTabText]}>
-            Empresa
+            Company
           </Text>
         </Pressable>
       </View>
@@ -514,13 +514,13 @@ const PersonForm: React.FC<FormProps> = ({ formData, errors, lang, refs, onUpdat
     </View>
 
     <View style={styles.inputContainer}>
-      <Text style={styles.inputLabel}>Apellido</Text>
+      <Text style={styles.inputLabel}>{t('surname', lang)}</Text>
       <TextInput
         ref={refs.surnameRef}
         style={styles.textInput}
         value={formData.surname}
         onChangeText={(value) => onUpdateField('surname', value)}
-        placeholder="Apellido"
+        placeholder={t('surname', lang)}
         autoCapitalize="words"
         returnKeyType="next"
         onSubmitEditing={() => onFocusNext(refs.emailRef)}
@@ -546,12 +546,12 @@ const PersonForm: React.FC<FormProps> = ({ formData, errors, lang, refs, onUpdat
 const CompanyForm: React.FC<FormProps> = ({ formData, errors, lang, refs, onUpdateField, onFocusNext }) => (
   <View style={styles.formContainer}>
     <View style={styles.inputContainer}>
-      <Text style={styles.inputLabel}>Nombre Empresa</Text>
+      <Text style={styles.inputLabel}>Company name</Text>
       <TextInput
         style={styles.textInput}
         value={formData.name}
         onChangeText={(value) => onUpdateField('name', value)}
-        placeholder="Nombre Empresa"
+        placeholder="Company name"
         autoCapitalize="words"
         returnKeyType="next"
         onSubmitEditing={() => onFocusNext(refs.emailRef)}
@@ -596,13 +596,13 @@ const RegistrationFields: React.FC<RegistrationFieldsProps> = ({
     </View>
 
     <View style={styles.inputContainer}>
-      <Text style={styles.inputLabel}>Contraseña</Text>
+      <Text style={styles.inputLabel}>{t('password', lang)}</Text>
       <TextInput
         ref={refs.passwordRef}
         style={[styles.textInput, errors.password ? styles.textInputError : null]}
         value={formData.password}
         onChangeText={(value) => onUpdateField('password', value)}
-        placeholder="Contraseña"
+        placeholder={t('password', lang)}
         secureTextEntry
         autoCapitalize="none"
         returnKeyType="next"

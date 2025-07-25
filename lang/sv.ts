@@ -1,4 +1,5 @@
 export default {
+	  "msg_welcome": "Welcome back",
 	"email": "E-post",
 	"password": "Lösenord",
 	"forgot_pass": "glömt lösenord?",
@@ -22,6 +23,7 @@ export default {
 	"privacy_policy3": " (obligatorisk)",
 	"data_collection": "Jag samtycker till behandlingen av data för kommersiella ändamål och kampanjer",
 	"link": "https://www.ealloora.com/ealloora-app-legal-advice/",
+	"dont_have_an_account": "Don't have an account?",
 
 	"my_account": "Mitt konto",
 	"my_devices": "Mina enheter",
@@ -43,6 +45,7 @@ export default {
 	"associate_help2": "kappen längst ner på sidan",
 
 	"name": "Förnamn",
+	  "surname":"Surname",
 	"phone": "Telefon",
 
 	"battery_status": "Batteristatus",

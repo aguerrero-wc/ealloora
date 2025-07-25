@@ -1,4 +1,5 @@
 export default {
+	  "msg_welcome": "Welcome back",
 	"email": "sähköposti",
 	"password": "Salasana",
 	"forgot_pass": "Unohditko salasanasi?",
@@ -20,6 +21,8 @@ export default {
 	"privacy_policy3": " (vaaditaan)",
 	"data_collection": "Suostun tietojen käsittelyyn kaupallisiin tarkoituksiin ja tarjouksiin",
 	"link": "https://www.ealloora.com/ealloora-app-legal-advice",
+	"dont_have_an_account": "Don't have an account?",
+
 
 	"my_account": "Tilini",
 	"my_devices": "Laitteeni",
@@ -40,7 +43,9 @@ export default {
 	"associate_help1": "Paina ”+” painiketta",
 	"associate_help2": "sivun alaosassa",
 
+
 	"name": "Etunimi",
+	  "surname":"Surname",
 	"phone": "Puhelin",
 
 	"battery_status": "Akun tila",

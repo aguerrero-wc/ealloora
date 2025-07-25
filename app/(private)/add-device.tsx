@@ -308,14 +308,14 @@ interface TabRoute {
   if (!loaded) {
     return (
       <View style={styles.loadingContainer}>
-        <LoadingSpinner visible={true} text="Cargando..." />
+        <LoadingSpinner visible={true} text="Loading..." />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <LoadingSpinner visible={loading} text="Asociando dispositivo..." />
+      <LoadingSpinner visible={loading} text="Pairing device..." />
       
       {/* Header */}
       <View style={styles.header}>
@@ -404,10 +404,10 @@ const SerialTab: React.FC<SerialTabProps> = ({
         <View style={styles.descriptionContainer}>
           <MaterialIcons name="devices" size={48} color={colors.primaryButton} />
           <Text style={styles.title}>
-            Agregar por Serial
+            Add by Serial Number          
           </Text>
           <Text style={styles.subtitle}>
-            Ingresa el código serial y nombre del dispositivo para asociarlo a tu cuenta.
+            Enter the serial code and device name to link it to your account.
           </Text>
         </View>
 
@@ -420,7 +420,7 @@ const SerialTab: React.FC<SerialTabProps> = ({
             style={styles.textInput}
             value={serial}
             onChangeText={onSerialChange}
-            placeholder={`Ingresa el ${t('serial_pl', lang).toLowerCase()}`}
+            placeholder={`Enter the ${t('serial_pl', lang).toLowerCase()}`}
             placeholderTextColor={colors.secondaryText}
             autoCapitalize="characters"
             autoCorrect={false}
@@ -441,7 +441,7 @@ const SerialTab: React.FC<SerialTabProps> = ({
             style={styles.textInput}
             value={name}
             onChangeText={onNameChange}
-            placeholder={`Ingresa el ${t('dev_name', lang).toLowerCase()}`}
+            placeholder={`Enter the ${t('dev_name', lang).toLowerCase()}`}
             placeholderTextColor={colors.secondaryText}
             autoCapitalize="words"
             autoCorrect={false}

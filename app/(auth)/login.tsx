@@ -314,10 +314,10 @@ const LoginScreen: React.FC = () => {
             {/* Welcome Text */}
             <View style={styles.welcomeContainer}>
               <Text style={styles.welcomeTitle}>
-                Bienvenido de vuelta
+                {t('msg_welcome', lang)}
               </Text>
               <Text style={styles.welcomeSubtitle}>
-                Inicia sesión en tu cuenta
+                  Log in to your account
               </Text>
             </View>
           </View>
@@ -461,7 +461,7 @@ const LoginScreen: React.FC = () => {
             {/* Registration Link */}
             <View style={styles.registrationContainer}>
               <Text style={styles.registrationQuestion}>
-                ¿No tienes una cuenta?
+              {t('dont_have_an_account', lang)}
               </Text>
               <Pressable 
                 onPress={() => router.push('/(auth)/registration')}

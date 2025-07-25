@@ -1,4 +1,5 @@
 export default {
+	  "msg_welcome": "Welcome back",
 	"email": "Email",
 	"password": "Password",
 	"forgot_pass": "Password dimenticata?",
@@ -22,6 +23,8 @@ export default {
 	"privacy_policy3": " (obbligatorio)",
 	"data_collection": "Acconsento al trattamento dei dati per finalitÃ  commerciali e promozioni",
 	"link": "https://www.ealloora.com/ealloora-app-legal-advice",
+	"dont_have_an_account": "Don't have an account?",
+
 
 	"my_account": "Il mio account",
 	"my_devices": "I miei dispositivi",
@@ -43,6 +46,7 @@ export default {
 	"associate_help2": "in fondo alla pagina",
 
         "name": "Nome",
+		  "surname":"Surname",
         "phone": "Telefono",
 
 	"battery_status": "Status batteria",

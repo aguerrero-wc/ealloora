@@ -2,7 +2,7 @@
   "expo": {
     "name": "ealloora",
     "slug": "ealloora",
-    "version": "1.0.0",
+    "version": "2.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ealloora",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.aguerrero91.ealloora",
+      "bundleIdentifier": "com.pinegrove.ealloora",
       "infoPlist": {
         "NSCameraUsageDescription": "Para escanear códigos QR de dispositivos IoT",
         "ITSAppUsesNonExemptEncryption": false

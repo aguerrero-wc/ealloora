@@ -410,7 +410,7 @@ const EventWatchFamilyHistoryScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <LoadingSpinner visible={loading} text="Cargando historial..." />
+      <LoadingSpinner visible={loading} text="Loading history..." />
 
       {/* Header */}
       <View style={styles.header}>
@@ -418,7 +418,7 @@ const EventWatchFamilyHistoryScreen: React.FC = () => {
           <MaterialIcons name="arrow-back" size={24} color={colors.primaryButton} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>
-          {deviceSettings?.l_device_name || deviceName || 'Dispositivo'}
+          {deviceSettings?.l_device_name || deviceName || 'Device'}
         </Text>
         <Pressable onPress={() => setShowDateFilter(true)} style={styles.filterButton}>
           <MaterialIcons name="filter-list" size={24} color={colors.primaryButton} />

@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-    ActivityIndicator,
-    Modal,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Modal,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 interface LoadingSpinnerProps {
@@ -15,7 +15,7 @@ interface LoadingSpinnerProps {
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   visible,
-  text = 'Cargando...',
+  text = 'Loading...',
   color = '#007AFF',
 }) => {
   if (!visible) return null;
