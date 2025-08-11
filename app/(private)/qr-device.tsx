@@ -5,14 +5,14 @@ import * as Localization from 'expo-localization';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 // Components
@@ -160,7 +160,7 @@ const QRDeviceScreen: React.FC = () => {
         console.log('Error 400:', responseJson);
         Alert.alert(
           'Error',
-          'Código serial no válido. Verifica el código del dispositivo',
+          'Invalid serial code. Check the device code.',
           [{ text: 'OK' }],
           { cancelable: false }
         );
@@ -172,7 +172,7 @@ const QRDeviceScreen: React.FC = () => {
         console.log('Error 405:', responseJson);
         Alert.alert(
           'Error',
-          'Código QR no válido. Escanea un código QR válido',
+          'Invalid QR code. Scan a valid QR code.',
           [{ text: 'OK' }],
           { cancelable: false }
         );
@@ -181,7 +181,7 @@ const QRDeviceScreen: React.FC = () => {
       }
 
       if (responseJson.status_code >= 400) {
-        throw new Error(responseJson.message || 'Error del servidor');
+        throw new Error(responseJson.message || 'Server Error');
       }
 
       // Éxito
@@ -190,7 +190,7 @@ const QRDeviceScreen: React.FC = () => {
 
     } catch (error: any) {
       console.error('❌ Error associating device:', error);
-      showError(error.message || 'Error durante la asociación del dispositivo');
+      showError(error.message || 'Error during device pairing');
       setLoading(false);
     }
   };
@@ -200,8 +200,8 @@ const QRDeviceScreen: React.FC = () => {
     setLoading(false);
 
     Alert.alert(
-      '¡Éxito!',
-      'Dispositivo asociado correctamente',
+      'Success',
+      'Device successfully paired',
       [
         {
           text: 'OK',
@@ -247,7 +247,7 @@ const QRDeviceScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <LoadingSpinner visible={loading} text="Asociando dispositivo..." />
+      <LoadingSpinner visible={loading} text="Paring device..." />
       
       {/* Header */}
       <View style={styles.header}>
@@ -266,17 +266,17 @@ const QRDeviceScreen: React.FC = () => {
         <View style={styles.descriptionContainer}>
           <MaterialIcons name="qr-code-scanner" size={48} color={colors.primaryButton} />
           <Text style={styles.title}>
-            Código QR Escaneado
+            Scanned QR code
           </Text>
           <Text style={styles.subtitle}>
-            El código QR se escaneó correctamente. Agrega un nombre para completar la asociación del dispositivo.
+            The QR code was scanned successfully. Add a name to complete the device pairing.
           </Text>
         </View>
 
         {/* Información del QR Code */}
         {code && (
           <View style={styles.qrInfoContainer}>
-            <Text style={styles.qrInfoLabel}>Código escaneado:</Text>
+            <Text style={styles.qrInfoLabel}>Scanned code:</Text>
             <Text style={styles.qrInfoText}>{code}</Text>
           </View>
         )}
@@ -289,7 +289,7 @@ const QRDeviceScreen: React.FC = () => {
             style={styles.textInput}
             value={name}
             onChangeText={setName}
-            placeholder={`Ingresa el ${t('dev_name', lang).toLowerCase()}`}
+            placeholder={`Enter the ${t('dev_name', lang).toLowerCase()}`}
             placeholderTextColor={colors.secondaryText}
             autoCapitalize="words"
             autoCorrect={false}

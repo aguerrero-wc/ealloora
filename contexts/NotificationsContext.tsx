@@ -87,7 +87,7 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
       }
       
       if (finalStatus !== 'granted') {
-        Alert.alert('Error', 'Se necesitan permisos de notificaciones para el funcionamiento completo de la app.');
+        Alert.alert('Error', 'Notification permissions are required for the app to function fully.');
         return;
       }
       
@@ -96,7 +96,7 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
         const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
         
         if (!projectId) {
-          console.log('⚠️ No projectId found, usando token básico...');
+          console.log('⚠️ No projectId found, using basic token...');
           token = (await Notifications.getExpoPushTokenAsync()).data;
         } else {
           console.log('✅ Using projectId:', projectId);
@@ -110,11 +110,11 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
         await sendTokenToServer(token);
         
       } catch (error) {
-        console.error('Error obteniendo push token:', error);
+        console.error('Error obtaining push token:', error);
         // Fallback: continuar sin token
       }
     } else {
-      Alert.alert('Error', 'Las notificaciones push no funcionan en simulador.');
+      Alert.alert('Error', 'Push notifications do not work in simulator.');
     }
   };
 
@@ -123,7 +123,7 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
     if (!user) return;
 
     try {
-      console.log('📤 Enviando token al servidor...');
+      console.log('📤 Sending token to server...');
       
       const response = await makeAuthenticatedRequest(`user/${user.uid}?action=token`, {
         method: 'PUT',
@@ -132,15 +132,15 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
         }),
       });
 
-      console.log('✅ Token enviado al servidor exitosamente');
+      console.log('✅ Token successfully sent to the server');
     } catch (error) {
-      console.error('❌ Error enviando token al servidor:', error);
+      console.error('❌ Error sending token to server:', error);
     }
   };
 
   // Manejar notificación recibida
   const handleNotificationReceived = (notification: Notifications.Notification) => {
-    console.log('🔔 Notificación recibida:', notification);
+    console.log('🔔 Notification received:', notification);
     setNotification(notification);
     
     // Si la app está en foreground, triggear refresh automático

@@ -18,6 +18,7 @@ import {
 
 // Components
 import LoadingSpinner from '../../components/LoadingSpinner';
+import PrivateHeader from '../../components/PrivateHeader';
 
 // Constants
 import api from '../../constants/api';
@@ -413,7 +414,7 @@ const EventWatchFamilyHistoryScreen: React.FC = () => {
       <LoadingSpinner visible={loading} text="Loading history..." />
 
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Pressable onPress={handleGoBack} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={colors.primaryButton} />
         </Pressable>
@@ -423,7 +424,14 @@ const EventWatchFamilyHistoryScreen: React.FC = () => {
         <Pressable onPress={() => setShowDateFilter(true)} style={styles.filterButton}>
           <MaterialIcons name="filter-list" size={24} color={colors.primaryButton} />
         </Pressable>
-      </View>
+      </View> */}
+
+            {/* Header */}
+      <PrivateHeader 
+        title="History"
+        showBack={true}
+        showProfile={false}
+      />
 
       {/* Device Image */}
       <Image

@@ -1,4 +1,3 @@
-// app/(private)/device.tsx
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
@@ -16,6 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import PrivateHeader from '../../components/PrivateHeader';
+
 
 // Contexts y helpers
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -53,14 +54,13 @@ const t = (key: TranslationKeys, locale: string): string => {
 
 // Placeholder para imágenes de dispositivos - reemplaza con tus assets reales
 const getDeviceIcon = (deviceType: string) => {
-  // 🔄 TODO: Reemplaza con tu DeviceTypeManager.getDeviceIcon()
   switch (deviceType) {
     case 'termo':
-      return require('../../assets/slide/volt.png'); // Agrega tu imagen
+      return require('../../assets/slide/termo.png');
     case 'watch':
-      return require('../../assets/slide/volt.png'); // Agrega tu imagen
+      return require('../../assets/slide/watch.png');
     default:
-      return require('../../assets/slide/volt.png'); // Agrega tu imagen
+      return require('../../assets/slide/volt.png');
   }
 };
 
@@ -130,18 +130,18 @@ const DeviceScreen: React.FC = () => {
     if (!user) return;
 
     try {
-      console.log('🔄 Cargando dispositivos...');
+      console.log('🔄 Loading devices...');
       const result = await getUserData(user.uid, 'last');
 
       if (result.success && result.data) {
         setDevices(result.data.devices || []);
-        console.log('✅ Dispositivos cargados:', result.data.devices?.length || 0);
+        console.log('✅ Load devices:', result.data.devices?.length || 0);
       } else {
-        console.error('❌ Error cargando dispositivos:', result.error);
+        console.error('❌ Error loading devices:', result.error);
         showError(result.error || 'Error loading devices');
       }
     } catch (error: any) {
-      console.error('❌ Error cargando dispositivos:', error);
+      console.error('❌ Error loading devices:', error);
       showError(error.message || 'Error loading devices');
     } finally {
       setLoading(false);
@@ -167,9 +167,9 @@ const DeviceScreen: React.FC = () => {
           onPress: async () => {
             try {
               await signOut(auth);
-              console.log('✅ Usuario deslogueado');
+              console.log('✅ User logged out');
             } catch (error) {
-              console.error('❌ Error al cerrar sesión:', error);
+              console.error('❌ Error closing session:', error);
             }
           },
         },
@@ -178,7 +178,6 @@ const DeviceScreen: React.FC = () => {
   };
 
 const navigateToDevice = (device: any) => {
-  console.log('📱 Navegando a dispositivooooooo:', device.type);
   
   // Navegar a la página de historial del dispositivo
   router.push({
@@ -188,7 +187,7 @@ const navigateToDevice = (device: any) => {
       deviceName: device.settings?.[0]?.l_device_name || device.serial_number,
       sigfox_id: device.sigfox_id,
       deviceType: device.type?.types_name || 'generic',
-      deviceSection: 'Single', // Para indicar que es un dispositivo específico
+      deviceSection: 'Single', 
     },
   });
 };
@@ -207,7 +206,7 @@ const navigateToDevice = (device: any) => {
     
     // Si el modo está OFF, automáticamente es desconectado
     if (modeId !== 1) {
-      return { status: 'ko', label: 'Desconectado' };
+      return { status: 'ko', label: 'Disconnected' };
     }
     
     // Prioridad 2: Verificar el estado más reciente del dispositivo
@@ -218,19 +217,19 @@ const navigateToDevice = (device: any) => {
       
       // Verificar si hay alarma activa
       if (state?.is_alarm === true) {
-        return { status: 'alarm', label: 'Alarma Activa' };
+        return { status: 'alarm', label: 'Active Alarm' };
       }
       
       // Estados que indican dispositivo activo/conectado
       const activeStates = ['OK', 'ARMED', 'MONITORING'];
       if (activeStates.includes(state?.state_name)) {
-        return { status: 'ok', label: 'Conectado' };
+        return { status: 'ok', label: 'Connected' };
       }
       
       // Estados que indican dispositivo inactivo
       const inactiveStates = ['DISARMED', 'OFF', 'DISCONNECTED'];
       if (inactiveStates.includes(state?.state_name)) {
-        return { status: 'ko', label: 'Desconectado' };
+        return { status: 'ko', label: 'Disconnected' };
       }
     }
     
@@ -238,7 +237,7 @@ const navigateToDevice = (device: any) => {
     if (device.type?.types_name === 'termo') {
       const lastTermoData = device.last_termo_data?.[0];
       if (lastTermoData && lastTermoData.temperature != null) {
-        return { status: 'ok', label: 'Conectado' };
+        return { status: 'ok', label: 'Connected' };
       }
     }
     
@@ -251,18 +250,17 @@ const navigateToDevice = (device: any) => {
       
       // Si la última actualización fue hace menos de 24 horas
       if (hoursDiff < 24) {
-        return { status: 'ok', label: 'Conectado' };
+        return { status: 'ok', label: 'Connected' };
       }
     }
     
     // Por defecto, si el modo está ON pero no hay datos recientes
-    return { status: 'warning', label: 'Sin datos recientes' };
+    return { status: 'warning', label: 'No recent data available' };
   };
 
   // Obtener estado del dispositivo mejorado
   const getDeviceState = (device: any) => {
     const type = device.type?.types_name;
-    console.log('typeeeeeeeeeee',type);
     
     if (type === 'termo') {
       // Para termómetros, mostrar temperatura
@@ -277,7 +275,7 @@ const navigateToDevice = (device: any) => {
         
         // Si hay alarma, mostrar estado de alarma
         if (state.is_alarm === true) {
-          return 'ALARMA';
+          return 'ALARM';
         }
         
         // Mostrar el estado localizado según el idioma
@@ -290,16 +288,16 @@ const navigateToDevice = (device: any) => {
           case 'ARMED':
             return 'Armado';
           case 'MONITORING':
-            return 'Monitoreando';
+            return 'Monitoring';
           default:
-            return state.state_name || 'Desconocido';
+            return state.state_name || 'Unknown';
         }
       }
       
       // Fallback al método anterior si no hay datos nuevos
       const lastData = device.last_watch_data?.[0];
       if (lastData && lastData.alarm != null) {
-        return lastData.alarm === 1 ? 'Alarma' : 'Normal';
+        return lastData.alarm === 1 ? 'Alarm' : 'Normal';
       }
       
       return '-';
@@ -325,14 +323,14 @@ const navigateToDevice = (device: any) => {
   const getStatusBadgeText = (connectionState: any) => {
     switch (connectionState.status) {
       case 'ok':
-        return '● CONECTADO';
+        return '● CONNECTED';
       case 'alarm':
-        return '● ALARMA';
+        return '● ALARM';
       case 'warning':
         return '● ADVERTENCIA';
       case 'ko':
       default:
-        return '● DESCONECTADO';
+        return '● DISCONNECT';
     }
   };
 
@@ -380,7 +378,7 @@ const navigateToDevice = (device: any) => {
 
   // Renderizar tarjeta de dispositivo actualizada
   const renderDeviceCard = (device: any, index: number) => {
-    const deviceName = device.settings?.[0]?.l_device_name || 'Dispositivo';
+    const deviceName = device.settings?.[0]?.l_device_name || 'Devices';
     const serialNumber = device.serial_number;
     const connectionState = getConnectionState(device);
     const deviceType = getDeviceType(device);
@@ -521,17 +519,27 @@ const navigateToDevice = (device: any) => {
 
   return (
     <View style={styles.container}>
-      <LoadingSpinner visible={loading} text="Cargando dispositivos..." />
+      <LoadingSpinner visible={loading} text="Loading devices..." />
 
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('my_devices', lang)}</Text>
         <View style={styles.headerActions}>
           <Pressable onPress={handleLogout} style={styles.logoutButton}>
             <MaterialIcons name="logout" size={24} color={colors.primaryButton} />
           </Pressable>
         </View>
-      </View>
+      </View> */}
+
+<PrivateHeader 
+  title={t('my_devices', lang)}
+  showMenu={true}
+  showLogout={true}
+  // rightAction={{
+  //   icon: 'add',
+  //   onPress: () => router.push('/(private)/add-device')
+  // }}
+/>
 
       {/* Content */}
       <ScrollView
@@ -726,6 +734,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  profileButton: {
+    padding: 8,
   },
 });
 

@@ -34,10 +34,10 @@ export const useErrorContext = () => {
       showError: (message: string) => Alert.alert('Error', message),
       hideError: () => {},
       handleFirebaseAuthError: (error: FirebaseError, retryCallback?: () => void) => {
-        Alert.alert('Error', error.message || 'Error de autenticación');
+        Alert.alert('Error', error.message || 'Authentication error');
       },
       handleApiError: (error: any, customMessage?: string) => {
-        Alert.alert('Error', customMessage || 'Error de API');
+        Alert.alert('Error', customMessage || 'API Error');
       },
     };
   }
@@ -72,25 +72,24 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   // Mapeo de códigos de error de Firebase a mensajes en español
   const getFirebaseErrorMessage = (errorCode: string): string => {
     const errorMessages: { [key: string]: string } = {
-      // Auth errors
-      'auth/user-not-found': 'No existe una cuenta con este email',
-      'auth/wrong-password': 'Contraseña incorrecta',
-      'auth/invalid-email': 'Email inválido',
-      'auth/user-disabled': 'Esta cuenta ha sido deshabilitada',
-      'auth/too-many-requests': 'Demasiados intentos fallidos. Intenta más tarde',
-      'auth/network-request-failed': 'Error de conexión. Verifica tu internet',
-      'auth/invalid-credential': 'Credenciales inválidas',
-      'auth/email-already-in-use': 'Este email ya está registrado',
-      'auth/weak-password': 'La contraseña es muy débil',
-      'auth/requires-recent-login': 'Necesitas iniciar sesión nuevamente',
-      
+      'auth/user-not-found': 'No account exists with this email',
+      'auth/wrong-password': 'Incorrect password',
+      'auth/invalid-email': 'Invalid email',
+      'auth/user-disabled': 'This account has been disabled',
+      'auth/too-many-requests': 'Too many failed attempts. Please try again later',
+      'auth/network-request-failed': 'Connection error. Check your internet',
+      'auth/invalid-credential': 'Invalid credentials',
+      'auth/email-already-in-use': 'This email is already registered',
+      'auth/weak-password': 'The password is too weak',
+      'auth/requires-recent-login': 'You need to log in again',
+
       // Custom server errors
-      'server/user-not-found': 'Usuario no encontrado en el servidor',
-      'server/invalid-token': 'Token de sesión inválido',
-      'server/maintenance': 'Servidor en mantenimiento. Intenta más tarde',
+      'server/user-not-found': 'User not found on the server',
+      'server/invalid-token': 'Invalid session token',
+      'server/maintenance': 'Server under maintenance. Please try again later',
     };
 
-    return errorMessages[errorCode] || 'Ocurrió un error inesperado. Intenta nuevamente';
+    return errorMessages[errorCode] || 'An unexpected error occurred. Please try again.';
   };
 
   // Manejo específico de errores de Firebase Auth
@@ -108,17 +107,17 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
     } else if (error.message) {
       errorMessage = error.message;
     } else {
-      errorMessage = 'Error de autenticación. Intenta nuevamente';
+      errorMessage = 'Authentication error. Please try again.';
     }
 
     // Si hay un callback de retry y es un error de red, ofrecer reintentar
     if (retryCallback && (error.code === 'auth/network-request-failed' || error.status === 500)) {
       Alert.alert(
-        'Error de Conexión',
-        errorMessage + '\n\n¿Quieres intentar nuevamente?',
+        'Connection Error',
+        errorMessage + '\n\nWould you like to try again?',
         [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Reintentar', onPress: retryCallback }
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Retry', onPress: retryCallback }
         ]
       );
     } else {
@@ -130,41 +129,41 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   const handleApiError = (error: any, customMessage?: string) => {
     console.log('🌐 API Error:', error);
 
-    let errorMessage = customMessage || 'Error de conexión con el servidor';
+    let errorMessage = customMessage || 'Error connecting to the server';
 
     if (error.response) {
       // Error de respuesta del servidor
       const status = error.response.status;
       const data = error.response.data;
 
-      switch (status) {
-        case 400:
-          errorMessage = data?.message || 'Solicitud inválida';
-          break;
-        case 401:
-          errorMessage = 'No autorizado. Inicia sesión nuevamente';
-          break;
-        case 403:
-          errorMessage = 'No tienes permisos para esta acción';
-          break;
-        case 404:
-          errorMessage = 'Recurso no encontrado';
-          break;
-        case 500:
-          errorMessage = 'Error interno del servidor. Intenta más tarde';
-          break;
-        case 503:
-          errorMessage = 'Servicio no disponible. Intenta más tarde';
-          break;
-        default:
-          errorMessage = `Error del servidor (${status})`;
-      }
+    switch (status) {
+      case 400:
+        errorMessage = data?.message || 'Invalid request';
+        break;
+      case 401:
+        errorMessage = 'Unauthorized. Please log in again';
+        break;
+      case 403:
+        errorMessage = 'You do not have permission for this action';
+        break;
+      case 404:
+        errorMessage = 'Resource not found';
+        break;
+      case 500:
+        errorMessage = 'Internal server error. Please try again later';
+        break;
+      case 503:
+        errorMessage = 'Service unavailable. Please try again later';
+        break;
+      default:
+        errorMessage = `Server error (${status})`;
+    }
     } else if (error.request) {
       // Error de red
-      errorMessage = 'Error de conexión. Verifica tu internet';
+      errorMessage = 'Connection Error';
     } else {
       // Error en la configuración de la request
-      errorMessage = error.message || 'Error inesperado';
+      errorMessage = error.message || 'unexpected error';
     }
 
     showError(errorMessage);

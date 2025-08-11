@@ -18,6 +18,7 @@ import {
 
 // Components
 import LoadingSpinner from '../../components/LoadingSpinner';
+import PrivateHeader from '../../components/PrivateHeader';
 
 // Constants
 import api from '../../constants/api';
@@ -194,7 +195,7 @@ interface TabRoute {
         console.log('Error 400:', responseJson);
         Alert.alert(
           'Error',
-          'Código serial no válido. Verifica el código del dispositivo',
+          'Invalid serial code. Check the device code.',
           [{ text: 'OK' }],
           { cancelable: false }
         );
@@ -203,7 +204,7 @@ interface TabRoute {
       }
 
       if (responseJson.status_code >= 400) {
-        throw new Error(responseJson.message || 'Error del servidor');
+        throw new Error(responseJson.message || 'Server Error');
       }
 
       // Éxito
@@ -212,7 +213,7 @@ interface TabRoute {
 
     } catch (error: any) {
       console.error('❌ Error associating device:', error);
-      showError(error.message || 'Error durante la asociación del dispositivo');
+      showError(error.message || 'Error during device pairing');
       setLoading(false);
     }
   };
@@ -222,8 +223,8 @@ interface TabRoute {
     setLoading(false);
 
     Alert.alert(
-      '¡Éxito!',
-      'Dispositivo asociado correctamente',
+      'Success!',
+      'Device successfully paired',
       [
         {
           text: 'OK',
@@ -263,8 +264,8 @@ interface TabRoute {
         
         if (!granted) {
           Alert.alert(
-            'Permiso de cámara',
-            'Necesitas dar permiso para usar la cámara y escanear códigos QR',
+            'Camera permission',
+            'You need to give permission to use the camera and scan QR codes.',
             [{ text: 'OK' }]
           );
           return;
@@ -285,7 +286,7 @@ interface TabRoute {
       
     } catch (error) {
       console.error('Error requesting camera permission:', error);
-      showError('Error al solicitar permisos de cámara');
+      showError('Error requesting camera permissions');
     }
   };
 
@@ -295,9 +296,9 @@ interface TabRoute {
   };
 
   // Navegación hacia atrás
-  const handleGoBack = () => {
-    router.back();
-  };
+  // const handleGoBack = () => {
+  //   router.back();
+  // };
 
   // Efectos
   useEffect(() => {
@@ -317,14 +318,21 @@ interface TabRoute {
     <View style={styles.container}>
       <LoadingSpinner visible={loading} text="Pairing device..." />
       
-      {/* Header */}
+      {/* Header
       <View style={styles.header}>
         <Pressable onPress={handleGoBack} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={colors.primaryButton} />
         </Pressable>
         <Text style={styles.headerTitle}>{t('add_new_dev', lang)}</Text>
         <View style={{ width: 40 }} />
-      </View>
+      </View> */}
+
+<PrivateHeader 
+  title={t('add_new_dev', lang)}
+  showBack={true}
+  showMenu={false}
+  showLogout={true}
+/>
 
       {/* Custom Tab Bar */}
       <View style={styles.tabContainer}>
