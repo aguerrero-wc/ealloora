@@ -399,7 +399,7 @@ const RegistrationScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <LoadingSpinner visible={loading} text="Registrando usuario..." />
+      <LoadingSpinner visible={loading} text="Registering user..." />
       
       {/* Header */}
       <View style={styles.header}>
@@ -417,7 +417,7 @@ const RegistrationScreen: React.FC = () => {
           onPress={() => setActiveTab('person')}
         >
           <Text style={[styles.tabText, activeTab === 'person' && styles.activeTabText]}>
-            Usuario
+            User
           </Text>
         </Pressable>
         <Pressable

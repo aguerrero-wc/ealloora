@@ -1,7 +1,6 @@
 // app/(private)/add-device.tsx
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCameraPermissions } from 'expo-camera';
 import * as Localization from 'expo-localization';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -64,8 +63,6 @@ const colors = {
   error: '#FF3B30',
   inputBackground: '#f5f5f5',
   inputBorder: '#e0e0e0',
-  tabActive: '#007AFF',
-  tabInactive: '#999999',
 };
 
 const AddDeviceScreen: React.FC = () => {
@@ -79,11 +76,7 @@ const AddDeviceScreen: React.FC = () => {
   const list = params.list as string | undefined;
   const map = params.map as string | undefined;
 
-  // Hook para permisos de cámara
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-
   // Estados principales
-  const [activeTab, setActiveTab] = useState<TabType>('serial');
   const [loading, setLoading] = useState(false);
   const [lang, setLang] = useState<keyof Languages>('en');
   const [loaded, setLoaded] = useState(false);
@@ -95,34 +88,14 @@ const AddDeviceScreen: React.FC = () => {
   // Referencias
   const nameRef = useRef<TextInput>(null);
 
-  // Estados para las tabs
-  const [routes, setRoutes] = useState<TabRoute[]>([
-    { key: 'serial', title: 'SERIAL' },
-    { key: 'qr', title: 'QR' },
-  ]);
-
-// Types para tabs
-type TabType = 'serial' | 'qr';
-
-interface TabRoute {
-  key: TabType;
-  title: string;
-}
-
-  // Configurar idioma y títulos de tabs
-  const setupLanguageAndTabs = async () => {
+  // Configurar idioma
+  const setupLanguage = async () => {
     try {
       const storedLang = await AsyncStorage.getItem('lang');
       if (storedLang) {
         const langCode = storedLang.substring(0, 2) as keyof Languages;
         if (translations[langCode]) {
           setLang(langCode);
-          
-          // Actualizar títulos de tabs con traducciones
-          setRoutes([
-            { key: 'serial', title: t('serial', langCode).toUpperCase() },
-            { key: 'qr', title: t('qr', langCode).toUpperCase() },
-          ]);
         } else {
           setLang('en');
         }
@@ -131,10 +104,6 @@ interface TabRoute {
         const langCode = locale.languageCode?.substring(0, 2) as keyof Languages;
         if (translations[langCode]) {
           setLang(langCode);
-          setRoutes([
-            { key: 'serial', title: t('serial', langCode).toUpperCase() },
-            { key: 'qr', title: t('qr', langCode).toUpperCase() },
-          ]);
         } else {
           setLang('en');
         }
@@ -249,60 +218,14 @@ interface TabRoute {
     );
   };
 
-  // Abrir cámara para QR Scanner
-  const openCamera = async () => {
-    try {
-      // Solicitar permisos de cámara usando el hook
-      if (!cameraPermission) {
-        // Aún no se han cargado los permisos
-        return;
-      }
-
-      if (!cameraPermission.granted) {
-        // Solicitar permisos
-        const { granted } = await requestCameraPermission();
-        
-        if (!granted) {
-          Alert.alert(
-            'Camera permission',
-            'You need to give permission to use the camera and scan QR codes.',
-            [{ text: 'OK' }]
-          );
-          return;
-        }
-      }
-
-      // Permisos concedidos - navegar al scanner
-      const navigationParams = {
-        ...(first && { first }),
-        ...(list && { list }),
-        ...(map && { map }),
-      };
-
-      router.push({
-        pathname: '/(private)/barcode-scanner',
-        params: navigationParams,
-      });
-      
-    } catch (error) {
-      console.error('Error requesting camera permission:', error);
-      showError('Error requesting camera permissions');
-    }
-  };
-
   // Focus en siguiente campo
   const focusNextField = (ref: React.RefObject<TextInput>) => {
     ref.current?.focus();
   };
 
-  // Navegación hacia atrás
-  // const handleGoBack = () => {
-  //   router.back();
-  // };
-
   // Efectos
   useEffect(() => {
-    setupLanguageAndTabs();
+    setupLanguage();
   }, []);
 
   // Renderizar contenido según carga
@@ -318,206 +241,88 @@ interface TabRoute {
     <View style={styles.container}>
       <LoadingSpinner visible={loading} text="Pairing device..." />
       
-      {/* Header
-      <View style={styles.header}>
-        <Pressable onPress={handleGoBack} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.primaryButton} />
-        </Pressable>
-        <Text style={styles.headerTitle}>{t('add_new_dev', lang)}</Text>
-        <View style={{ width: 40 }} />
-      </View> */}
+      {/* Header */}
+      <PrivateHeader 
+        title={t('add_new_dev', lang)}
+        showBack={true}
+        showProfile={true}
+      />
 
-<PrivateHeader 
-  title={t('add_new_dev', lang)}
-  showBack={true}
-  showMenu={false}
-  showLogout={true}
-/>
+      {/* Content */}
+      <KeyboardAvoidingView 
+        style={styles.content} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.formContainer}>
+          {/* Descripción */}
+          <View style={styles.descriptionContainer}>
+            <MaterialIcons name="devices" size={48} color={colors.primaryButton} />
+            <Text style={styles.title}>
+              Add by Serial Number          
+            </Text>
+            <Text style={styles.subtitle}>
+              Enter the serial code and device name to link it to your account.
+            </Text>
+          </View>
 
-      {/* Custom Tab Bar */}
-      <View style={styles.tabContainer}>
-        {routes.map((route) => (
+          {/* Campo Serial */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>
+              {t('serial_pl', lang)}
+            </Text>
+            <TextInput
+              style={styles.textInput}
+              value={serial}
+              onChangeText={setSerial}
+              placeholder={`Enter the ${t('serial_pl', lang).toLowerCase()}`}
+              placeholderTextColor={colors.secondaryText}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              returnKeyType="next"
+              onSubmitEditing={() => focusNextField(nameRef)}
+              editable={!loading}
+              maxLength={20}
+            />
+          </View>
+
+          {/* Campo Nombre */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>
+              {t('dev_name', lang)}
+            </Text>
+            <TextInput
+              ref={nameRef}
+              style={styles.textInput}
+              value={name}
+              onChangeText={setName}
+              placeholder={`Enter the ${t('dev_name', lang).toLowerCase()}`}
+              placeholderTextColor={colors.secondaryText}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleAddDevice}
+              editable={!loading}
+              maxLength={50}
+            />
+          </View>
+        </View>
+
+        {/* Botón Asociar */}
+        <View style={styles.buttonContainer}>
           <Pressable
-            key={route.key}
             style={[
-              styles.tab,
-              activeTab === route.key && styles.activeTab
+              styles.primaryButton,
+              (!serial.trim() || !name.trim() || loading) && styles.disabledButton
             ]}
-            onPress={() => setActiveTab(route.key)}
+            onPress={handleAddDevice}
+            disabled={!serial.trim() || !name.trim() || loading}
           >
-            <Text style={[
-              styles.tabText,
-              activeTab === route.key && styles.activeTabText
-            ]}>
-              {route.title}
+            <Text style={styles.primaryButtonText}>
+              {t('associate', lang).toUpperCase()}
             </Text>
           </Pressable>
-        ))}
-      </View>
-
-      {/* Tab Content */}
-      {activeTab === 'serial' ? (
-        <SerialTab
-          serial={serial}
-          name={name}
-          lang={lang}
-          onSerialChange={setSerial}
-          onNameChange={setName}
-          onAddDevice={handleAddDevice}
-          nameRef={nameRef}
-          onFocusNext={focusNextField}
-          disabled={loading}
-        />
-      ) : (
-        <QRTab
-          lang={lang}
-          onOpenCamera={openCamera}
-        />
-      )}
-    </View>
-  );
-};
-
-// Componente para tab de Serial
-interface SerialTabProps {
-  serial: string;
-  name: string;
-  lang: string;
-  onSerialChange: (value: string) => void;
-  onNameChange: (value: string) => void;
-  onAddDevice: () => void;
-  nameRef: React.RefObject<TextInput>;
-  onFocusNext: (ref: React.RefObject<TextInput>) => void;
-  disabled: boolean;
-}
-
-const SerialTab: React.FC<SerialTabProps> = ({
-  serial,
-  name,
-  lang,
-  onSerialChange,
-  onNameChange,
-  onAddDevice,
-  nameRef,
-  onFocusNext,
-  disabled,
-}) => {
-  return (
-    <KeyboardAvoidingView 
-      style={styles.tabContent} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.formContainer}>
-        {/* Descripción */}
-        <View style={styles.descriptionContainer}>
-          <MaterialIcons name="devices" size={48} color={colors.primaryButton} />
-          <Text style={styles.title}>
-            Add by Serial Number          
-          </Text>
-          <Text style={styles.subtitle}>
-            Enter the serial code and device name to link it to your account.
-          </Text>
         </View>
-
-        {/* Campo Serial */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>
-            {t('serial_pl', lang)}
-          </Text>
-          <TextInput
-            style={styles.textInput}
-            value={serial}
-            onChangeText={onSerialChange}
-            placeholder={`Enter the ${t('serial_pl', lang).toLowerCase()}`}
-            placeholderTextColor={colors.secondaryText}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            returnKeyType="next"
-            onSubmitEditing={() => onFocusNext(nameRef)}
-            editable={!disabled}
-            maxLength={20}
-          />
-        </View>
-
-        {/* Campo Nombre */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>
-            {t('dev_name', lang)}
-          </Text>
-          <TextInput
-            ref={nameRef}
-            style={styles.textInput}
-            value={name}
-            onChangeText={onNameChange}
-            placeholder={`Enter the ${t('dev_name', lang).toLowerCase()}`}
-            placeholderTextColor={colors.secondaryText}
-            autoCapitalize="words"
-            autoCorrect={false}
-            returnKeyType="done"
-            onSubmitEditing={onAddDevice}
-            editable={!disabled}
-            maxLength={50}
-          />
-        </View>
-      </View>
-
-      {/* Botón Asociar */}
-      <View style={styles.buttonContainer}>
-        <Pressable
-          style={[
-            styles.primaryButton,
-            (!serial.trim() || !name.trim() || disabled) && styles.disabledButton
-          ]}
-          onPress={onAddDevice}
-          disabled={!serial.trim() || !name.trim() || disabled}
-        >
-          <Text style={styles.primaryButtonText}>
-            {t('associate', lang).toUpperCase()}
-          </Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
-  );
-};
-
-// Componente para tab de QR
-interface QRTabProps {
-  lang: string;
-  onOpenCamera: () => void;
-}
-
-const QRTab: React.FC<QRTabProps> = ({ lang, onOpenCamera }) => {
-  return (
-    <View style={styles.tabContent}>
-      <View style={styles.qrContainer}>
-        {/* Ícono QR en lugar de imagen (puedes cambiar por Image si tienes el asset) */}
-        <View style={styles.qrIconContainer}>
-          <MaterialIcons name="qr-code-scanner" size={120} color={colors.primaryButton} />
-        </View>
-        
-        {/* Contenido */}
-        <View style={styles.qrContent}>
-          <Text style={styles.title}>
-            {t('qr_scan', lang)}
-          </Text>
-          <Text style={styles.subtitle}>
-            {t('qr_how', lang)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Botón para iniciar escaneo */}
-      <View style={styles.buttonContainer}>
-        <Pressable
-          style={styles.primaryButton}
-          onPress={onOpenCamera}
-        >
-          <MaterialIcons name="camera-alt" size={20} color={colors.cardBackground} />
-          <Text style={[styles.primaryButtonText, { marginLeft: 8 }]}>
-            {t('start_scan', lang).toUpperCase()}
-          </Text>
-        </Pressable>
-      </View>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -531,59 +336,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.cardBackground,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: 60,
-    backgroundColor: colors.cardBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.inputBorder,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.primaryText,
-  },
-  
-  // Tab styles
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: colors.cardBackground,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  tab: {
-    flex: 1,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 3,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: colors.tabActive,
-  },
-  tabText: {
-    fontSize: 14,
-    color: colors.tabInactive,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: colors.tabActive,
-    fontWeight: 'bold',
-  },
-
-  // Content styles
-  tabContent: {
+  content: {
     flex: 1,
     backgroundColor: colors.cardBackground,
   },
@@ -665,20 +418,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 0.5,
-  },
-
-  // QR tab styles
-  qrContainer: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  qrIconContainer: {
-    alignItems: 'center',
-    paddingVertical: 48,
-  },
-  qrContent: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
   },
 });
 
