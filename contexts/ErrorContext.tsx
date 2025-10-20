@@ -73,7 +73,7 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   const getFirebaseErrorMessage = (errorCode: string): string => {
     const errorMessages: { [key: string]: string } = {
       'auth/user-not-found': 'No account exists with this email',
-      'auth/wrong-password': 'Incorrect password',
+      'auth/wrong-password': 'Invalid credentials',
       'auth/invalid-email': 'Invalid email',
       'auth/user-disabled': 'This account has been disabled',
       'auth/too-many-requests': 'Too many failed attempts. Please try again later',

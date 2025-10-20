@@ -8,6 +8,7 @@ export default function PrivateLayout() {
       <Stack.Screen name="add-device" />
       <Stack.Screen name="user-profile" />
       <Stack.Screen name="device-history" />
+      <Stack.Screen name="device-options" />
     </Stack>
   );
 }

@@ -1,11 +1,10 @@
+// app/(private)/device.tsx - Versión completa con auto-refresh
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
-import { useRouter } from 'expo-router';
-import { signOut } from 'firebase/auth';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
   Image,
   Pressable,
   RefreshControl,
@@ -13,14 +12,12 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import PrivateHeader from '../../components/PrivateHeader';
 
-
 // Contexts y helpers
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { auth } from '../../constants/firebaseConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import { useErrorContext } from '../../contexts/ErrorContext';
 import { useNotifications } from '../../contexts/NotificationsContext';
@@ -56,9 +53,9 @@ const t = (key: TranslationKeys, locale: string): string => {
 const getDeviceIcon = (deviceType: string) => {
   switch (deviceType) {
     case 'termo':
-      return require('../../assets/slide/termo.png');
+      return require('../../assets/slide/volt.png');
     case 'watch':
-      return require('../../assets/slide/watch.png');
+      return require('../../assets/slide/volt.png');
     default:
       return require('../../assets/slide/volt.png');
   }
@@ -155,42 +152,40 @@ const DeviceScreen: React.FC = () => {
     loadDevices();
   }, [user]);
 
-  // Logout handler
-  const handleLogout = async () => {
-    Alert.alert(
-      '',
-      t('confirm_logout', lang),
-      [
-        { text: t('cancel', lang), style: 'cancel' },
-        {
-          text: 'OK',
-          onPress: async () => {
-            try {
-              await signOut(auth);
-              console.log('✅ User logged out');
-            } catch (error) {
-              console.error('❌ Error closing session:', error);
-            }
-          },
-        },
-      ]
-    );
+  // Navegar al historial del dispositivo
+  const navigateToDevice = (device: any) => {
+    router.push({
+      pathname: '/(private)/device-history',
+      params: {
+        deviceID: device.UserDevice?.serial_number || device.serial_number,
+        deviceName: device.settings?.[0]?.l_device_name || device.serial_number,
+        sigfox_id: device.sigfox_id,
+        deviceType: device.type?.types_name || 'generic',
+        deviceSection: 'Single', 
+      },
+    });
   };
 
-const navigateToDevice = (device: any) => {
-  
-  // Navegar a la página de historial del dispositivo
-  router.push({
-    pathname: '/(private)/device-history',
-    params: {
-      deviceID: device.UserDevice?.serial_number || device.serial_number,
-      deviceName: device.settings?.[0]?.l_device_name || device.serial_number,
-      sigfox_id: device.sigfox_id,
-      deviceType: device.type?.types_name || 'generic',
-      deviceSection: 'Single', 
-    },
-  });
-};
+  // Navegar a las opciones del dispositivo
+  const navigateToDeviceOptions = (device: any) => {
+    const settingId = device.settings?.[0]?.setting_id;
+    
+    if (!settingId) {
+      showError('Device settings not found. Please try refreshing the list.');
+      return;
+    }
+
+    router.push({
+      pathname: '/(private)/device-options',
+      params: {
+        deviceID: device.UserDevice?.serial_number || device.serial_number,
+        deviceName: device.settings?.[0]?.l_device_name || device.serial_number,
+        sigfox_id: device.sigfox_id,
+        deviceType: device.type?.types_name || 'generic',
+        settingId: settingId,
+      },
+    });
+  };
 
   // Obtener estado de batería
   const getBatteryStatus = (device: any) => {
@@ -279,14 +274,13 @@ const navigateToDevice = (device: any) => {
         }
         
         // Mostrar el estado localizado según el idioma
-        // Por ahora usar español, pero puedes cambiarlo según el idioma seleccionado
         switch (state.state_name) {
           case 'OK':
             return 'OK';
           case 'DISARMED':
-            return 'Desarmado';
+            return 'Disarmed';
           case 'ARMED':
-            return 'Armado';
+            return 'Armed';
           case 'MONITORING':
             return 'Monitoring';
           default:
@@ -327,10 +321,10 @@ const navigateToDevice = (device: any) => {
       case 'alarm':
         return '● ALARM';
       case 'warning':
-        return '● ADVERTENCIA';
+        return '● WARNING';
       case 'ko':
       default:
-        return '● DISCONNECT';
+        return '● DISCONNECTED';
     }
   };
 
@@ -346,7 +340,7 @@ const navigateToDevice = (device: any) => {
     if (!updatedOn) return '-';
     
     try {
-      return new Date(updatedOn).toLocaleDateString('es-ES', {
+      return new Date(updatedOn).toLocaleDateString('en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -377,44 +371,157 @@ const navigateToDevice = (device: any) => {
   };
 
   // Renderizar tarjeta de dispositivo actualizada
-  const renderDeviceCard = (device: any, index: number) => {
-    const deviceName = device.settings?.[0]?.l_device_name || 'Devices';
-    const serialNumber = device.serial_number;
-    const connectionState = getConnectionState(device);
-    const deviceType = getDeviceType(device);
-    const humidity = getHumidity(device);
-    const temperature = getTemperature(device);
-    const deviceState = getDeviceState(device);
-    const badgeColor = getStatusBadgeColor(connectionState);
-    const badgeText = getStatusBadgeText(connectionState);
+  // const renderDeviceCard = (device: any, index: number) => {
+  //   const deviceName = device.settings?.[0]?.l_device_name || 'Device';
+  //   const serialNumber = device.serial_number;
+  //   const connectionState = getConnectionState(device);
+  //   const deviceType = getDeviceType(device);
+  //   const humidity = getHumidity(device);
+  //   const temperature = getTemperature(device);
+  //   const deviceState = getDeviceState(device);
+  //   const badgeColor = getStatusBadgeColor(connectionState);
+  //   const badgeText = getStatusBadgeText(connectionState);
 
-    return (
+  //   return (
+  //     <TouchableOpacity
+  //       key={`${device.sigfox_id || device.serial_number}-${index}`}
+  //       style={[
+  //         styles.deviceCard,
+  //         { 
+  //           borderLeftWidth: 4, 
+  //           borderLeftColor: badgeColor,
+  //           // Añadir un ligero fondo de alerta si necesita atención
+  //           backgroundColor: needsAttention(device) 
+  //             ? colors.alertBackground
+  //             : colors.cardBackground
+  //         }
+  //       ]}
+  //       onPress={() => navigateToDevice(device)}
+  //       activeOpacity={0.8}
+  //     >
+  //       {/* Badge de estado prominente */}
+  //       <View style={[
+  //         styles.statusBadge,
+  //         { backgroundColor: badgeColor }
+  //       ]}>
+  //         <Text style={styles.statusBadgeText}>
+  //           {badgeText}
+  //         </Text>
+  //       </View>
+
+  //       {/* Botón de opciones */}
+  //       <TouchableOpacity
+  //         style={styles.optionsButton}
+  //         onPress={() => navigateToDeviceOptions(device)}
+  //         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+  //       >
+  //         <MaterialIcons name="more-vert" size={20} color={colors.secondaryText} />
+  //       </TouchableOpacity>
+
+  //       <View style={styles.deviceHeader}>
+  //         <View style={styles.deviceIconContainer}>
+  //           <Image
+  //             style={styles.deviceIconImage}
+  //             source={getDeviceIcon(deviceType)}
+  //             defaultSource={require('../../assets/logoactionbar.png')}
+  //           />
+  //         </View>
+  //         <View style={styles.deviceInfo}>
+  //           <Text style={styles.deviceName}>{deviceName}</Text>
+  //           <Text style={styles.deviceSerial}>{serialNumber}</Text>
+  //           <Text style={styles.deviceType}>
+  //             {deviceType.charAt(0).toUpperCase() + deviceType.slice(1)}
+  //           </Text>
+  //         </View>
+  //       </View>
+
+  //       <View style={styles.deviceDetails}>
+  //         {/* Batería */}
+  //         <View style={styles.detailRow}>
+  //           <Text style={styles.deviceProperty}>
+  //             {t('battery_status', lang)}: <Text style={styles.deviceValue}>{getBatteryStatus(device)}%</Text>
+  //           </Text>
+  //         </View>
+
+  //         {/* Última transmisión */}
+  //         <View style={styles.detailRow}>
+  //           <Text style={styles.deviceProperty}>
+  //             {t('last_trasmission', lang)}: <Text style={styles.deviceValue}>{getLastTransmission(device)}</Text>
+  //           </Text>
+  //         </View>
+          
+  //         {/* Mostrar temperatura y humedad para termómetros */}
+  //         {temperature && (
+  //           <View style={styles.detailRow}>
+  //             <Text style={styles.deviceProperty}>
+  //               {t('temperature', lang)}: <Text style={[styles.deviceValue, styles.temperatureValue]}>{temperature}</Text>
+  //             </Text>
+  //           </View>
+  //         )}
+  //         {humidity && (
+  //           <View style={styles.detailRow}>
+  //             <Text style={styles.deviceProperty}>
+  //               {t('humidity', lang)}: <Text style={styles.deviceValue}>{humidity}</Text>
+  //             </Text>
+  //           </View>
+  //         )}
+
+  //         {/* Información adicional del estado si es relevante */}
+  //         {connectionState.status === 'warning' && (
+  //           <View style={styles.warningRow}>
+  //             <MaterialIcons name="warning" size={16} color={colors.warning} />
+  //             <Text style={[styles.deviceProperty, { color: colors.warning, marginLeft: 4 }]}>
+  //               No recent data
+  //             </Text>
+  //           </View>
+  //         )}
+  //       </View>
+  //     </TouchableOpacity>
+  //   );
+  // };
+
+
+  const renderDeviceCard = (device: any, index: number) => {
+  const deviceName = device.settings?.[0]?.l_device_name || 'Device';
+  const serialNumber = device.serial_number;
+  const connectionState = getConnectionState(device);
+  const deviceType = getDeviceType(device);
+  const humidity = getHumidity(device);
+  const temperature = getTemperature(device);
+  const deviceState = getDeviceState(device);
+  const badgeColor = getStatusBadgeColor(connectionState);
+  const badgeText = getStatusBadgeText(connectionState);
+
+  return (
+    <View
+      key={`${device.sigfox_id || device.serial_number}-${index}`}
+      style={[
+        styles.deviceCard,
+        { 
+          borderLeftWidth: 4, 
+          borderLeftColor: badgeColor,
+          backgroundColor: needsAttention(device) 
+            ? colors.alertBackground
+            : colors.cardBackground
+        }
+      ]}
+    >
+      {/* Badge de estado prominente */}
+      <View style={[
+        styles.statusBadge,
+        { backgroundColor: badgeColor }
+      ]}>
+        <Text style={styles.statusBadgeText}>
+          {badgeText}
+        </Text>
+      </View>
+
+      {/* Contenido principal clickeable */}
       <TouchableOpacity
-        key={`${device.sigfox_id || device.serial_number}-${index}`}
-        style={[
-          styles.deviceCard,
-          { 
-            borderLeftWidth: 4, 
-            borderLeftColor: badgeColor,
-            // Añadir un ligero fondo de alerta si necesita atención
-            backgroundColor: needsAttention(device) 
-              ? colors.alertBackground
-              : colors.cardBackground
-          }
-        ]}
         onPress={() => navigateToDevice(device)}
         activeOpacity={0.8}
+        style={styles.cardMainContent}
       >
-        {/* Badge de estado prominente */}
-        <View style={[
-          styles.statusBadge,
-          { backgroundColor: badgeColor }
-        ]}>
-          <Text style={styles.statusBadgeText}>
-            {badgeText}
-          </Text>
-        </View>
-
         <View style={styles.deviceHeader}>
           <View style={styles.deviceIconContainer}>
             <Image
@@ -433,31 +540,17 @@ const navigateToDevice = (device: any) => {
         </View>
 
         <View style={styles.deviceDetails}>
-          {/* Estado del dispositivo */}
-          {/* <View style={styles.detailRow}>
-            <Text style={styles.deviceProperty}>
-              Estado: <Text style={[
-                styles.deviceValue,
-                {
-                  color: connectionState.status === 'alarm' ? colors.error :
-                         connectionState.status === 'ok' ? colors.success :
-                         connectionState.status === 'warning' ? colors.warning : colors.secondaryText
-                }
-              ]}>{deviceState}</Text>
-            </Text>
-          </View> */}
-
           {/* Batería */}
           <View style={styles.detailRow}>
             <Text style={styles.deviceProperty}>
-              {t('battery_status', lang)}: <Text style={styles.deviceValue}>{getBatteryStatus(device)}%</Text>
+              Battery: <Text style={styles.deviceValue}>{getBatteryStatus(device)}%</Text>
             </Text>
           </View>
 
           {/* Última transmisión */}
           <View style={styles.detailRow}>
             <Text style={styles.deviceProperty}>
-              {t('last_trasmission', lang)}: <Text style={styles.deviceValue}>{getLastTransmission(device)}</Text>
+              Last transmission: <Text style={styles.deviceValue}>{getLastTransmission(device)}</Text>
             </Text>
           </View>
           
@@ -465,14 +558,14 @@ const navigateToDevice = (device: any) => {
           {temperature && (
             <View style={styles.detailRow}>
               <Text style={styles.deviceProperty}>
-                {t('temperature', lang)}: <Text style={[styles.deviceValue, styles.temperatureValue]}>{temperature}</Text>
+                Temperature: <Text style={[styles.deviceValue, styles.temperatureValue]}>{temperature}</Text>
               </Text>
             </View>
           )}
           {humidity && (
             <View style={styles.detailRow}>
               <Text style={styles.deviceProperty}>
-                {t('humidity', lang)}: <Text style={styles.deviceValue}>{humidity}</Text>
+                Humidity: <Text style={styles.deviceValue}>{humidity}</Text>
               </Text>
             </View>
           )}
@@ -482,14 +575,38 @@ const navigateToDevice = (device: any) => {
             <View style={styles.warningRow}>
               <MaterialIcons name="warning" size={16} color={colors.warning} />
               <Text style={[styles.deviceProperty, { color: colors.warning, marginLeft: 4 }]}>
-                Sin datos recientes
+                No recent data
               </Text>
             </View>
           )}
         </View>
       </TouchableOpacity>
-    );
-  };
+
+      {/* Sección de acciones en la parte inferior */}
+      <View style={styles.cardActions}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigateToDevice(device)}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons name="history" size={18} color={colors.primaryButton} />
+          <Text style={styles.actionButtonText}>History</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.actionsSeparator} />
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigateToDeviceOptions(device)}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons name="settings" size={18} color={colors.secondaryText} />
+          <Text style={styles.actionButtonTextSecondary}>Settings</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
   // Renderizar vista sin dispositivos
   const renderNoDevices = () => (
@@ -517,29 +634,26 @@ const navigateToDevice = (device: any) => {
     }
   }, [user, setRefreshCallback]);
 
+  // Recargar dispositivos cuando la pantalla vuelve al foco
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        console.log('🔄 Screen focused - reloading devices...');
+        loadDevices();
+      }
+    }, [user])
+  );
+
   return (
     <View style={styles.container}>
       <LoadingSpinner visible={loading} text="Loading devices..." />
 
       {/* Header */}
-      {/* <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t('my_devices', lang)}</Text>
-        <View style={styles.headerActions}>
-          <Pressable onPress={handleLogout} style={styles.logoutButton}>
-            <MaterialIcons name="logout" size={24} color={colors.primaryButton} />
-          </Pressable>
-        </View>
-      </View> */}
-
-<PrivateHeader 
-  title={t('my_devices', lang)}
-  showMenu={true}
-  showLogout={true}
-  // rightAction={{
-  //   icon: 'add',
-  //   onPress: () => router.push('/(private)/add-device')
-  // }}
-/>
+      <PrivateHeader 
+        title={t('my_devices', lang)}
+        showBack={false}
+        showProfile={true}
+      />
 
       {/* Content */}
       <ScrollView
@@ -571,36 +685,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: 60,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.primaryText,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  testButton: {
-    backgroundColor: '#FF6B35',
-    padding: 8,
-    borderRadius: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoutButton: {
-    padding: 8,
-  },
   content: {
     flex: 1,
     padding: 16,
@@ -631,6 +715,23 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     letterSpacing: 0.5,
+  },
+  optionsButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 2,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   deviceHeader: {
     flexDirection: 'row',
@@ -735,8 +836,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  profileButton: {
-    padding: 8,
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 12,
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    color: colors.primaryButton,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  actionButtonTextSecondary: {
+    fontSize: 14,
+    color: colors.secondaryText,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+  actionsSeparator: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#e5e7eb',
   },
 });
 

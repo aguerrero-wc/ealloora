@@ -129,7 +129,7 @@ const LoginScreen: React.FC = () => {
       setErrorPassword(t('invalid_pass', lang));
       isValid = false;
     } else if (password.length < 6) {
-      setErrorPassword('La contraseña debe tener al menos 6 caracteres');
+      setErrorPassword('The password must be at least 6 characters long');
       isValid = false;
     }
 
@@ -208,7 +208,7 @@ const LoginScreen: React.FC = () => {
 
       if (responseJson.status_code === 400) {
         handleFirebaseAuthError({
-          message: responseJson.message?.message || 'Error en el servidor. Intenta más tarde.',
+          message: responseJson.message?.message || 'Server error. Please try again later.',
           status: 400
         }, handleLogin);
         setLoading(false);
@@ -258,11 +258,11 @@ const LoginScreen: React.FC = () => {
       console.error('Password reset error:', error);
       
       if (error.code === 'auth/user-not-found') {
-        setErrorRecover('No existe una cuenta con este email');
+        setErrorRecover('There is no account with this email address');
       } else if (error.code === 'auth/invalid-email') {
         setErrorRecover(t('invalid_email', lang));
       } else {
-        setErrorRecover('Error al enviar email de recuperación');
+        setErrorRecover('Error sending recovery email');
       }
     }
   };
@@ -280,7 +280,7 @@ const LoginScreen: React.FC = () => {
       {/* Loading Spinner */}
       <LoadingSpinner 
         visible={loading} 
-        text="Iniciando sesión..." 
+        text="Logging in" 
         color={colors.primaryButton}
       />
       
@@ -567,7 +567,7 @@ const LoginScreen: React.FC = () => {
               <MaterialIcons name="check-circle" size={32} color="#4CAF50" />
             </View>
             <Text style={styles.modalTitle}>
-              ¡Correo enviado!
+              Email sent!
             </Text>
             <Text style={styles.modalSubtitle}>
               {t('check_your_email', lang)}

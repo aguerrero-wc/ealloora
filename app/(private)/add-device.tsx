@@ -118,6 +118,18 @@ const AddDeviceScreen: React.FC = () => {
     }
   };
 
+  // Función para transformar el serial antes del envío
+  const transformSerial = (inputSerial: string): string => {
+    const trimmedSerial = inputSerial.trim().toUpperCase();
+    
+    // Si empieza con "SF", reemplazar con "00"
+    if (trimmedSerial.startsWith('SF')) {
+      return '00' + trimmedSerial.substring(2);
+    }
+    
+    return trimmedSerial;
+  };
+
   // Función para agregar dispositivo (formulario manual)
   const handleAddDevice = async () => {
     // Validaciones
@@ -139,12 +151,18 @@ const AddDeviceScreen: React.FC = () => {
     setLoading(true);
 
     try {
+      // Transformar el serial antes del envío
+      const transformedSerial = transformSerial(serial);
+      
+      console.log('📱 Original serial:', serial);
+      console.log('🔄 Transformed serial:', transformedSerial);
+
       // Obtener token del usuario
       const accessToken = await user.getIdToken(true);
 
-      // Llamada a la API
+      // Llamada a la API con el serial transformado
       const response = await fetch(
-        `${api.endpoint}device/${serial.toUpperCase()}?action=associate`,
+        `${api.endpoint}device/${transformedSerial}?action=associate`,
         {
           method: 'PUT',
           headers: {
